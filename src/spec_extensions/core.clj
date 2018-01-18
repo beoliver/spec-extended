@@ -17,13 +17,17 @@
 
 (defmacro spec-if-let
   "an extension of `if-let`. Only executes the `then` when the bound value
-   conforms to `spec`. Only checks the return value of any code executed
-   in the binding process.
+   conforms to `spec`.
 
-  examples
-  (spec-if-let even? [x 10] (println x))
-  (spec-if-let ::my-spec [x (some-fn)] (some-other-fn x) :else-branch)
-  (spec-if-let nil? [x (println 1)] :printed :didnt-print)
+   (spec-if-let <spec> <bindings> <then>)
+   (spec-if-let <spec> <bindings> <then> <else>)
+
+   like if-let, <bindings> is of the form [<var> <expr>]
+
+   examples
+   (spec-if-let even? [x 10] (println x))
+   (spec-if-let ::my-spec [x (some-fn)] (some-other-fn x) :else-branch)
+   (spec-if-let nil? [x (println 1)] :printed :didnt-print)
   "
   ([spec bindings then]
    `(spec-if-let ~spec ~bindings ~then nil))
@@ -37,8 +41,12 @@
 
 (defmacro spec-when-let
   "an extension of `when-let`. Only executes the `then` when the bound value
-   conforms to `spec`. Only checks the return value of any code executed
-   in the binding process.
+   conforms to `spec`.
+
+  (spec-when-let <spec> <bindings> <then>)
+  (spec-when-let <spec> <bindings> <then> <else>)
+
+  like when-let, <bindings> is of the form [<var> <expr>]
 
   example
   (spec-when-let even? [x 10] (println x))
@@ -56,6 +64,11 @@
   "an extension of `when-let`. Only executes the `then` when the bound value
    conforms to `spec`. If the value is not `valid?` then an `ex-info` error
    is thrown.
+
+   (spec-when-let <spec> <bindings> <then>)
+   (spec-when-let <spec> <bindings> <then> <else>)
+
+   like when-let, <bindings> is of the form [<var> <expr>]
 
   example
   (spec-when-let even? [x 10] (println x))
