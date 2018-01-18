@@ -15,8 +15,9 @@
 (declare spec-some->>)
 (declare spec-some->>!)
 (declare spec->)
+(declare spec->!)
 (declare spec->>)
-(declare spec-as->)
+(declare spec->>!)
 
 (defmacro spec-if-let
   "an extension of `if-let`. Only executes the `then` when the bound value
@@ -201,6 +202,30 @@
           g
           (last steps)))))
 
+(defmacro spec-some->>
+  "Similar to `some->>` but `forms` is a sequence of clauses.
+
+   (spec-some->> <expr>
+                 <spec-1> <form-1>
+                 <spec-2> <form-2>
+                 ...
+                 <spec-n> <form-n>)
+
+   Each <spec> is treated as a pre-condition.
+   When expr conforms to the supplied spec, threads it into the first form (via ->>),
+   and when that result conforms, through the next etc
+  "
+  [expr & forms]
+  (let [g (gensym)
+        steps (map (fn [[spec step]] `(when (s/valid? ~spec ~g)
+                                        (->> ~g ~step)))
+                   (partition 2 forms))]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
+
 (defmacro spec-some->>!
   "Similar to `some->>` but `forms` is a sequence of clauses.
    If a spec test is not valid, throws an `ex-info` error
@@ -259,15 +284,49 @@
           g
           (last steps)))))
 
+(defmacro spec->!
+  "Similar to `some->` but `forms` is a sequence of clauses.
+   If a spec test is not valid, throws an `ex-info` error
+
+  (spec->! <expr>
+           <pre-post> <form>
+           <pre-post> <form>
+           ...
+           <pre-post> <form>)
+
+  where <pre-post> is anything that contains keys `:pre` and `:post`.
+  If a key is not supplied then the test is passed. This allows to only
+  run pre/post condtions or a mix of both. An empty map means no tests are run.
+
+  When expr conforms to the supplied spec, threads it into the first form (via ->),
+  and when that result conforms, through the next etc"
+  [expr & forms]
+  (let [g (gensym)
+        steps (map (fn [[spec step]] `(if-let [pre# (:pre ~spec)]
+                                        (if-not (s/valid? pre# ~g)
+                                          (throw-spec ~spec ~g)
+                                          (let [res# (-> ~g ~step)]
+                                            (if-let [post# (:post ~spec)]
+                                              (if-not (s/valid? post# res#)
+                                                (throw-spec ~spec res#)
+                                                res#)
+                                              res#)))
+                                        (-> ~g ~step)))
+                   (partition 2 forms))]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
 
 (defmacro spec->>
   "Similar to `some->>` but `forms` is a sequence of clauses.
 
-  (spec-> <expr>
-          <pre-post> <form>
-          <pre-post> <form>
-          ...
-          <pre-post> <form>)
+  (spec->> <expr>
+           <pre-post> <form>
+           <pre-post> <form>
+           ...
+           <pre-post> <form>)
 
   where <pre-post> is anything that contains keys `:pre` and `:post`.
   If a key is not supplied then the test is passed. This allows to only
@@ -279,18 +338,55 @@
   (let [g (gensym)
         steps (map (fn [[spec step]] `(if-let [pre# (:pre ~spec)]
                                         (when (s/valid? pre# ~g)
-                                          (let [res# (-> ~g ~step)]
+                                          (let [res# (->> ~g ~step)]
                                             (if-let [post# (:post ~spec)]
                                               (when (s/valid? post# res#)
                                                 res#)
                                               res#)))
-                                        (-> ~g ~step)))
+                                        (->> ~g ~step)))
                    (partition 2 forms))]
     `(let [~g ~expr
            ~@(interleave (repeat g) (butlast steps))]
        ~(if (empty? steps)
           g
           (last steps)))))
+
+
+(defmacro spec->>!
+  "Similar to `some->>` but `forms` is a sequence of clauses.
+   If a spec test is not valid, throws an `ex-info` error
+
+  (spec->>! <expr>
+            <pre-post> <form>
+            <pre-post> <form>
+            ...
+            <pre-post> <form>)
+
+  where <pre-post> is anything that contains keys `:pre` and `:post`.
+  If a key is not supplied then the test is passed. This allows to only
+  run pre/post condtions or a mix of both. An empty map means no tests are run.
+
+  When expr conforms to the supplied spec, threads it into the first form (via ->>),
+  and when that result conforms, through the next etc"
+  [expr & forms]
+  (let [g (gensym)
+        steps (map (fn [[spec step]] `(if-let [pre# (:pre ~spec)]
+                                        (if-not (s/valid? pre# ~g)
+                                          (throw-spec ~spec ~g)
+                                          (let [res# (->> ~g ~step)]
+                                            (if-let [post# (:post ~spec)]
+                                              (if-not (s/valid? post# res#)
+                                                (throw-spec ~spec res#)
+                                                res#)
+                                              res#)))
+                                        (->> ~g ~step)))
+                   (partition 2 forms))]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
+
 
 
 ;; (defmacro as*->
