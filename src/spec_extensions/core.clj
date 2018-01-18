@@ -9,8 +9,11 @@
 (declare spec-when-let)
 (declare spec-when-let!)
 (declare spec-when-lets)
+(declare spec-when-lets!)
 (declare spec-some->)
+(declare spec-some->!)
 (declare spec-some->>)
+(declare spec-some->>!)
 (declare spec->)
 (declare spec->>)
 (declare spec-as->)
@@ -65,15 +68,15 @@
    conforms to `spec`. If the value is not `valid?` then an `ex-info` error
    is thrown.
 
-   (spec-when-let <spec> <bindings> <then>)
-   (spec-when-let <spec> <bindings> <then> <else>)
+   (spec-when-let! <spec> <bindings> <then>)
+   (spec-when-let! <spec> <bindings> <then> <else>)
 
    like when-let, <bindings> is of the form [<var> <expr>]
 
-  example
-  (spec-when-let even? [x 10] (println x))
-  (spec-if-let ::my-spec [x (some-fn)] (some-other-fn x))
-  (spec-when-let nil? [x (println 1)] :printed)
+   example
+   (spec-when-let! even? [x 10] (println x))
+   (spec-when-let! ::my-spec [x (some-fn)] (some-other-fn x))
+   (spec-when-let! nil? [x (println 1)] :printed)
   "
   ([spec bindings then]
    (let [form (bindings 0) rhs (bindings 1)]
@@ -172,21 +175,51 @@
           g
           (last steps)))))
 
-(defmacro spec-some->>
-  "Similar to `some->>` but `forms` is a sequence of clauses.
+(defmacro spec-some->!
+  "Similar to `some->` but `forms` is a sequence of clauses.
+   If a spec test is not valid, throws an `ex-info` error
 
-  (spec-some-> <expr>
-               <spec-1> <form-1>
-               <spec-2> <form-2>
-               ...
-               <spec-n> <form-n>)
+  (spec-some->! <expr>
+                <spec-1> <form-1>
+                <spec-2> <form-2>
+                ...
+                <spec-n> <form-n>)
 
   Each <spec> is treated as a pre-condition.
-  When expr conforms to the supplied spec, threads it into the first form (via ->>),
-  and when that result conforms, through the next etc"
+  When expr conforms to the supplied spec, threads it into the first form (via ->),
+  and when that result conforms, through the next etc.
+  "
   [expr & forms]
   (let [g (gensym)
-        steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g) (->> ~g ~step) nil))
+        steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g)
+                                        (-> ~g ~step)
+                                        (throw-spec ~spec ~g)))
+                   (partition 2 forms))]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
+
+(defmacro spec-some->>!
+  "Similar to `some->>` but `forms` is a sequence of clauses.
+   If a spec test is not valid, throws an `ex-info` error
+
+   (spec-some->>! <expr>
+                  <spec-1> <form-1>
+                  <spec-2> <form-2>
+                  ...
+                  <spec-n> <form-n>)
+
+   Each <spec> is treated as a pre-condition.
+   When expr conforms to the supplied spec, threads it into the first form (via ->>),
+   and when that result conforms, through the next etc
+  "
+  [expr & forms]
+  (let [g (gensym)
+        steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g)
+                                        (->> ~g ~step)
+                                        (throw-spec ~spec ~g)))
                    (partition 2 forms))]
     `(let [~g ~expr
            ~@(interleave (repeat g) (butlast steps))]
