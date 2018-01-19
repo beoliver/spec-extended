@@ -20,16 +20,19 @@ This begs the question, should we have provided a *stricter* `spec`? Perhaps som
 ```clojure
 (s/def ::my-stricter-even (s/and number? even?)) ;;note the importance of order
 ```
-Or could we *relax* the notion of validity (i.e don't throw an exception)
+Or should we *relax* the notion of validity (i.e don't throw an exception)
 ```clojure
 (defmacro catch-errors-valid?
   [spec expr]
   `(try (s/valid? ~spec ~expr)
         (catch Exception e# nil)))
 ```
-Both approaches have their benefits and their drawbacks. By default `spec-extended` catches exceptions thrown during validation and treats this as an sign that the value passed to it did not conform. However, in some cirsumstances it would be very nice to know when our system is not acting as expected. For this reason, a **bang** version of each macro is provided which will throw an error if a value is not `s/valid?`. If the validation process does cause an exception it will be placed in an `ex-info` map logging its context.
+Both approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence. However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
 
-
+For this reason, `spec-extended` aims to provide three versions of each macro
+i.   A version that hides validation exceptions - an exception thrown during validation is treated in the same way as `false`
+ii.  A version `!` that exposes validation exceptions, but treats `(s/valid? <expr>)` returning `false` as **ok**
+iii. A version `!!` that exposes validation exceptions and treats `(s/valid? <expr>)` returning `false` as an error.
 
 ### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
