@@ -27,6 +27,9 @@ Or could we *relax* the notion of validity (i.e don't throw an exception)
   `(try (s/valid? ~spec ~expr)
         (catch Exception e# nil)))
 ```
+Both approaches have their benefits and their drawbacks. By default `spec-extended` catches exceptions thrown during validation and treats this as an sign that the value passed to it did not conform. However, in some cirsumstances it would be very nice to know when our system is not acting as expected. For this reason, a **bang** version of each macro is provided which will throw an error if a value is not `s/valid?`. If the validation process does cause an exception it will be placed in an `ex-info` map logging its context.
+
+
 
 ### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
