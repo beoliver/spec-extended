@@ -1,6 +1,8 @@
 (ns spec-extensions.core
   (:require [clojure.spec :as s]
-            [spec-extensions.errors :refer [throw-spec catch-errors-valid?]]))
+            [spec-extensions.errors :refer [throw-spec
+                                            catch-errors-valid?
+                                            only-catch-spec-errors]]))
 
 (declare spec-if-let)
 (declare spec-if-lets)
@@ -190,6 +192,7 @@
           g
           (last steps)))))
 
+
 (defmacro spec-some->
   "Similar to `some->` but `forms` is a sequence of clauses.
 
@@ -205,20 +208,24 @@
 
   As soon as a pre-condition fails, the execution is aborted.
   This avoids the possiblity that a `nil` is propogated though the chain.
+  If an excption is thrown when persofming a spec check then `nil` is returned,
+  however all other errors are caught and re-thrown
   "
   [expr & forms]
   (let [g (gensym)
-        steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g)
+        steps (map (fn [[spec step]] `(if (try (s/valid? ~spec ~g)
+                                               (catch Exception e#
+                                                 (throw-spec ~spec ~g)))
                                         (-> ~g ~step)
-                                        (throw (Exception.))))
+                                        (throw-spec ~spec ~g)))
                    (partition 2 forms))]
-    `(try (let [~g ~expr
-                ~@(interleave (repeat g) (butlast steps))]
-            ~(if (empty? steps)
-               g
-               (last steps)))
-          (catch Exception e# nil))))
+    `(only-catch-spec-errors (let [~g ~expr
+                                   ~@(interleave (repeat g) (butlast steps))]
+                               ~(if (empty? steps)
+                                  g
+                                  (last steps))))))
 
+;;; TODO implement the error handling used in spec-some->
 (defmacro spec-some->>
   "Similar to `some->>` but `forms` is a sequence of clauses.
 

@@ -12,3 +12,10 @@
   [spec expr]
   `(try (s/valid? ~spec ~expr)
         (catch Exception e# nil)))
+
+(defmacro only-catch-spec-errors
+  [expr]
+  `(try ~expr
+        (catch Exception e#
+          (when-not (= ::invalid (:type (ex-data e#)))
+            (throw e#)))))

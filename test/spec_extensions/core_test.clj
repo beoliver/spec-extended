@@ -93,16 +93,15 @@
 
 
 (deftest spec-some->-test
-  (is (= 2 (spec-some-> 0
-                        even? inc
-                        odd?  inc)))
-  (is (nil? (spec-some-> 0
+  (is (= 2 (spec-some->* 0
                          even? inc
-                         even?  inc)))
-  (is (nil? (spec-some-> 0
-                         odd? inc
-                         odd? inc)))
-  )
+                         odd?  inc)))
+  (is (nil? (spec-some->* 0
+                          even? inc
+                          even?  inc)))
+  (is (nil? (spec-some->* 0
+                          odd? inc
+                          odd? inc))))
 
 
 ;; (macroexpand '(spec-some-> 0 even? inc even? inc even? inc))
