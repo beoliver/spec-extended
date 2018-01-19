@@ -16,7 +16,17 @@ The call `(s/valid? ::my-even 0)` will return `true` while `(s/valid? ::my-even 
 ```clojure
 IllegalArgumentException Argument must be an integer:   clojure.core/even? (core.clj:1383)
 ```
-
+This begs the question, should we have provided a *stricter* `spec`? Perhaps something like this:
+```clojure
+(s/def ::my-stricter-even (s/and number? even?)) ;;note the importance of order
+```
+Or could we *relax* the notion of validity (i.e don't throw an exception)
+```
+(defmacro catch-errors-valid?
+  [spec expr]
+  `(try (s/valid? ~spec ~expr)
+        (catch Exception e# nil)))
+```
 
 ### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
