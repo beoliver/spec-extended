@@ -1,4 +1,4 @@
-# spec-extensions
+# spec-extended
 
 A library that extends `clojure.spec`
 
@@ -74,7 +74,7 @@ Each `<spec>` is treated as a pre condition for each `<form>`. As soon as a `<sp
 ```clojure
 (ns my-project
   (:require [clojure.spec :as s]
-            [spec-extensions.core :as se]))
+            [spec-extended.core :as se]))
 
 (s/def ::my-even even?)
 

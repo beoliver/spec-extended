@@ -1,9 +1,9 @@
-(ns spec-extensions.core
+(ns spec-extensded.core
   "common clojure macros extended to work with specs."
   (:require [clojure.spec :as s]
-            [spec-extensions.errors :refer [throw-spec
-                                            catch-errors-valid?
-                                            only-catch-spec-errors]])
+            [spec-extended.errors :refer [throw-spec
+                                          catch-errors-valid?
+                                          only-catch-spec-errors]])
   (:refer-clojure :exclude [if-let when-let some-> some->> as->]))
 
 (declare if-let)

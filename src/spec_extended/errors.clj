@@ -1,4 +1,4 @@
-(ns spec-extensions.errors
+(ns spec-extended.errors
   (:require [clojure.spec :as s]))
 
 (defn throw-spec [spec value]

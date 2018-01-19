@@ -1,7 +1,7 @@
-(ns spec-extensions.core-test
+(ns spec-extended.core-test
   (:require [clojure.test :refer :all]
             [clojure.spec :as s]
-            [spec-extensions.core :as se]))
+            [spec-extended.core :as se]))
 
 (defmacro try-spec-expr
   [expr]
