@@ -1,16 +1,21 @@
 (ns spec-extensions.core
+  "common clojure macros extended to work with specs."
   (:require [clojure.spec :as s]
             [spec-extensions.errors :refer [throw-spec
                                             catch-errors-valid?
-                                            only-catch-spec-errors]]))
+                                            only-catch-spec-errors]])
+  (:refer-clojure :exclude [if-let when-let some-> some->> as->]))
 
-(declare spec-if-let)
-(declare spec-if-lets)
-(declare spec-when-let)
+(declare if-let)
+(declare if-lets)
+(declare when-let)
+(declare when-lets)
+
 (declare spec-when-let!)
-(declare spec-when-lets)
 (declare spec-when-lets!)
-(declare spec-some->)
+
+(declare some->)
+
 (declare spec-some->!)
 (declare spec-some->>)
 (declare spec-some->>!)
@@ -19,22 +24,22 @@
 (declare spec->>)
 (declare spec->>!)
 
-(defmacro spec-if-let
+(defmacro if-let
   "an extension of `if-let`. Only executes the `then` when the bound value
    conforms to `spec`.
 
-   (spec-if-let <spec> <bindings> <then>)
-   (spec-if-let <spec> <bindings> <then> <else>)
+   (if-let <spec> <bindings> <then>)
+   (if-let <spec> <bindings> <then> <else>)
 
    like if-let, <bindings> is of the form [<var> <expr>]
 
    examples
-   (spec-if-let even? [x 10] (println x))
-   (spec-if-let ::my-spec [x (some-fn)] (some-other-fn x) :else-branch)
-   (spec-if-let nil? [x (println 1)] :printed :didnt-print)
+   (if-let even? [x 10] (println x))
+   (if-let ::my-spec [x (some-fn)] (some-other-fn x) :else-branch)
+   (if-let nil? [x (println 1)] :printed :didnt-print)
   "
   ([spec bindings then]
-   `(spec-if-let ~spec ~bindings ~then nil))
+   `(if-let ~spec ~bindings ~then nil))
   ([spec bindings then else]
    (let [form (bindings 0) rhs (bindings 1)]
      `(let [res# ~rhs]
@@ -43,19 +48,19 @@
             ~then)
           ~else)))))
 
-(defmacro spec-when-let
+(defmacro when-let
   "an extension of `when-let`. Only executes the `then` when the bound value
    conforms to `spec`.
 
-  (spec-when-let <spec> <bindings> <then>)
-  (spec-when-let <spec> <bindings> <then> <else>)
+  (when-let <spec> <bindings> <then>)
+  (when-let <spec> <bindings> <then> <else>)
 
   like when-let, <bindings> is of the form [<var> <expr>]
 
   example
-  (spec-when-let even? [x 10] (println x))
-  (spec-if-let ::my-spec [x (some-fn)] (some-other-fn x))
-  (spec-when-let nil? [x (println 1)] :printed)
+  (when-let even? [x 10] (println x))
+  (if-let ::my-spec [x (some-fn)] (some-other-fn x))
+  (when-let nil? [x (println 1)] :printed)
   "
   [spec bindings then]
   (let [form (bindings 0) rhs (bindings 1)]
@@ -111,7 +116,7 @@
             ~then)
           (throw-spec ~spec res#))))))
 
-(defmacro spec-if-lets
+(defmacro if-lets
   "allows multiple bindings, where bindings take the form
   [[<var-1> <expr-1>] <spec-1> ... [<var-n> <expr-n>] <spec-n>]
 
@@ -119,15 +124,15 @@
   (spec-if-lets [[x 1] odd? [y 2] ::my-spec] (+ x y) :boop)
   "
   ([bindings then]
-   `(spec-if-lets ~bindings ~then nil))
+   `(if-lets ~bindings ~then nil))
   ([bindings then else]
    (if (seq bindings)
      `(spec-if-let* [~(first bindings) ~(second bindings)]
-        (spec-if-lets ~(drop 2 bindings) ~then ~else)
+        (if-lets ~(drop 2 bindings) ~then ~else)
         ~else)
      then)))
 
-(defmacro spec-when-lets
+(defmacro when-lets
   "allows multiple bindings, where bindings take the form
   [[<var-1> <expr-1>] <spec-1> ... [<var-n> <expr-n>] <spec-n>]
 
@@ -137,7 +142,7 @@
   ([bindings then]
    (if (seq bindings)
      `(spec-if-let* [~(first bindings) ~(second bindings)]
-        (spec-when-lets ~(drop 2 bindings) ~then)
+        (when-lets ~(drop 2 bindings) ~then)
         nil)
      then)))
 
@@ -155,14 +160,14 @@
         (spec-when-lets! ~(drop 2 bindings) ~then))
      then)))
 
-(defmacro spec-some->
+(defmacro some->
   "Similar to `some->` but `forms` is a sequence of clauses.
 
-  (spec-some-> <expr>
-               <spec-1> <form-1>
-               <spec-2> <form-2>
-               ...
-               <spec-n> <form-n>)
+  (some-> <expr>
+          <spec> <form>
+          <spec> <form>
+          ...
+          <spec> <form>)
 
   Each <spec> is treated as a pre-condition.
   When expr conforms to the supplied spec, threads it into the first form (via ->),
@@ -187,15 +192,14 @@
                                   g
                                   (last steps))))))
 
-;;; TODO implement the error handling used in spec-some->
-(defmacro spec-some->>
+(defmacro some->>
   "Similar to `some->>` but `forms` is a sequence of clauses.
 
-   (spec-some->> <expr>
-                 <spec-1> <form-1>
-                 <spec-2> <form-2>
-                 ...
-                 <spec-n> <form-n>)
+   (some->> <expr>
+            <spec> <form>
+            <spec> <form>
+            ...
+            <spec> <form>)
 
    Each <spec> is treated as a pre-condition.
    When expr conforms to the supplied spec, threads it into the first form (via ->>),
@@ -203,16 +207,19 @@
   "
   [expr & forms]
   (let [g (gensym)
-        steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g)
+        steps (map (fn [[spec step]] `(if (try (s/valid? ~spec ~g)
+                                               (catch Exception e#
+                                                 (throw-spec ~spec ~g)))
                                         (->> ~g ~step)
-                                        (throw (Exception.))))
+                                        (throw-spec ~spec ~g)))
                    (partition 2 forms))]
-    `(try (let [~g ~expr
-                ~@(interleave (repeat g) (butlast steps))]
-            ~(if (empty? steps)
-               g
-               (last steps)))
-          (catch Exception e# nil))))
+    `(only-catch-spec-errors (let [~g ~expr
+                                   ~@(interleave (repeat g) (butlast steps))]
+                               ~(if (empty? steps)
+                                  g
+                                  (last steps))))))
+
+;;; TODO implement the error handling used in spec-some->
 
 (defmacro spec-some->!
   "Similar to `some->` but `forms` is a sequence of clauses.
@@ -283,10 +290,10 @@
   and when that result conforms, through the next etc"
   [expr & forms]
   (let [g (gensym)
-        steps (map (fn [[spec step]] `(if-let [pre# (:pre ~spec)]
+        steps (map (fn [[spec step]] `(clojure.core/if-let [pre# (:pre ~spec)]
                                         (when (s/valid? pre# ~g)
                                           (let [res# (-> ~g ~step)]
-                                            (if-let [post# (:post ~spec)]
+                                            (clojure.core/if-let [post# (:post ~spec)]
                                               (when (s/valid? post# res#)
                                                 res#)
                                               res#)))
@@ -316,11 +323,11 @@
   and when that result conforms, through the next etc"
   [expr & forms]
   (let [g (gensym)
-        steps (map (fn [[spec step]] `(if-let [pre# (:pre ~spec)]
+        steps (map (fn [[spec step]] `(clojure.core/if-let [pre# (:pre ~spec)]
                                         (if-not (s/valid? pre# ~g)
                                           (throw-spec ~spec ~g)
                                           (let [res# (-> ~g ~step)]
-                                            (if-let [post# (:post ~spec)]
+                                            (clojure.core/if-let [post# (:post ~spec)]
                                               (if-not (s/valid? post# res#)
                                                 (throw-spec ~spec res#)
                                                 res#)
@@ -350,10 +357,10 @@
   and when that result conforms, through the next etc"
   [expr & forms]
   (let [g (gensym)
-        steps (map (fn [[spec step]] `(if-let [pre# (:pre ~spec)]
+        steps (map (fn [[spec step]] `(clojure.core/if-let [pre# (:pre ~spec)]
                                         (when (s/valid? pre# ~g)
                                           (let [res# (->> ~g ~step)]
-                                            (if-let [post# (:post ~spec)]
+                                            (clojure.core/if-let [post# (:post ~spec)]
                                               (when (s/valid? post# res#)
                                                 res#)
                                               res#)))
@@ -384,11 +391,11 @@
   and when that result conforms, through the next etc"
   [expr & forms]
   (let [g (gensym)
-        steps (map (fn [[spec step]] `(if-let [pre# (:pre ~spec)]
+        steps (map (fn [[spec step]] `(clojure.core/if-let [pre# (:pre ~spec)]
                                         (if-not (s/valid? pre# ~g)
                                           (throw-spec ~spec ~g)
                                           (let [res# (->> ~g ~step)]
-                                            (if-let [post# (:post ~spec)]
+                                            (clojure.core/if-let [post# (:post ~spec)]
                                               (if-not (s/valid? post# res#)
                                                 (throw-spec ~spec res#)
                                                 res#)
@@ -401,48 +408,36 @@
           g
           (last steps)))))
 
+(defmacro as->
+  "Similar to `as->` but `forms` is a sequence of clauses.
 
+   (as-> <expr> <name>
+         <spec> <form>
+         <spec> <form>
+         ...
+         <spec> <form>)
 
-;; (defmacro as*->
-;;   "Binds name to expr, evaluates the first form in the lexical context
-;;   of that binding, then binds name to that result, repeating for each
-;;   successive form, returning the result of the last form."
-;;   {:added "1.5"}
-;;   [expr name & forms]
-;;   `(let [~name ~expr
-;;          ~@(interleave (repeat name) (butlast forms))]
-;;      ~(if (empty? forms)
-;;         name
-;;         (last forms))))
+   Binds name to expr, evaluates the first form in the lexical context
+   of that binding, then binds name to that result, repeating for each
+   successive form, returning the result of the last form.
 
+   Important - Variable scoping, the `name` is currently exposed to specs
+   should be treated with caution
 
-;; (defmacro spec-as->
-;;   [expr name & forms]
-;;   `(let [~name ~expr
-;;          [form# condtions#] ~(first forms)]
-;;      form#
-;;      )
-
-;;   )
-
-;; (defmacro spec-as->
-;;   [expr name & forms]
-;;   `(let [~name ~expr
-;;          constraints# ~(second (first forms))]
-;;      (if-not (:pre constraints#)
-;;        (let [result# ~(first (first forms))]
-;;          )
-;;        (when (s/valid? (:pre constraints#) ~name)
-;;          (let [result# ~(first (first forms))]
-;;            (if (:post constraints#)
-;;              (when (s/valid? (:post constraints#) result#)
-;;                ~(spec-as-> name result#)
-;;                ))))
-
-
-
-;;        )
-;;      conditions#
-;;      )
-
-;;   )
+   (as-> 100 $
+         (s/and number? even?) (+ $ 50)
+         (fn [x] (= x $)) :name-was-exposed-to-spec
+         keyword? (identity $))
+  "
+  [expr name & forms]
+  (let [steps (map (fn [[spec step]] `(if (try (s/valid? ~spec ~name)
+                                               (catch Exception e#
+                                                 (throw-spec ~spec ~name)))
+                                        ~step
+                                        (throw-spec ~spec ~name)))
+                   (partition 2 forms))]
+    `(only-catch-spec-errors (let [~name ~expr
+                                   ~@(interleave (repeat name) (butlast steps))]
+                               ~(if (empty? steps)
+                                  name
+                                  (last steps))))))
