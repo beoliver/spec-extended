@@ -4,24 +4,24 @@ A library that extends `clojure.spec`
 
 Aims to provide spec extended versions of clojures branching and threading macros.
 
+In all of the following examples `spec` has been impoted as `s`, while `spec-extended` has been imported as `se`.
+
+### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
 
-### `if-let`
-
 ```clojure
-(ns my-project
-  (:require [clojure.spec :as s]
-            [spec-extensions.core :as se]))
-
 (s/def ::gt-than-fifty #(> % 50))
 
 (se/if-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
   (println "valid value was" x)
   (println "the else branch"))
 ```
-
 In the above example `(rand-int 100)` is computed, and if the resulting value is `spec/valid?` with respect to the composed spec `(s/and even? ::gt-than-fifty)` the *then* branch is executed. In a similar fashion there is a `when-let`.
-
+```clojure
+(se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
+  (println "valid value was" x))
+```
+###`some->`
 
 
 
