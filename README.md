@@ -6,6 +6,8 @@ Aims to provide spec extended versions of clojures branching and threading macro
 
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
 
+### `if-let`
+
 ```clojure
 (ns my-project
   (:require [clojure.spec :as s]
@@ -18,7 +20,9 @@ The most trivial and possibly most useful macro is the spec extended `if-let` fo
   (println "the else branch"))
 ```
 
-In the above example we composed a spec *on the fly* and treated it as a post condition. `(rand-int 100)` is computed, and if the resulting value is `spec/valid?` with respect to `::even` the *then* branch is executed.
+In the above example `(rand-int 100)` is computed, and if the resulting value is `spec/valid?` with respect to the composed spec `(s/and even? ::gt-than-fifty)` the *then* branch is executed. In a similar fashion there is a `when-let`.
+
+
 
 
 ```clojure
