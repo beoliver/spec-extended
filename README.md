@@ -30,9 +30,9 @@ Or should we *relax* the notion of validity (i.e don't throw an exception)
 Both approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence. However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
 
 For this reason, `spec-extended` aims to provide three versions of each macro
-i.   A version that hides validation exceptions - an exception thrown during validation is treated in the same way as `false`
-ii.  A version `!` that exposes validation exceptions, but treats `(s/valid? <expr>)` returning `false` as **ok**
-iii. A version `!!` that exposes validation exceptions and treats `(s/valid? <expr>)` returning `false` as an error.
+- A version that hides validation exceptions - an exception thrown during validation is treated in the same way as `false`
+- A version `!` that exposes validation exceptions, but treats `(s/valid? <expr>)` returning `false` as **ok**
+- A version `!!` that exposes validation exceptions and treats `(s/valid? <expr>)` returning `false` as an error.
 
 ### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
