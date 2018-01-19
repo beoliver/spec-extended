@@ -38,7 +38,7 @@
   ([spec bindings then else]
    (let [form (bindings 0) rhs (bindings 1)]
      `(let [res# ~rhs]
-        (if (s/valid? ~spec res#)
+        (if (catch-errors-valid? ~spec res#)
           (let [~form res#]
             ~then)
           ~else)))))
@@ -60,7 +60,7 @@
   [spec bindings then]
   (let [form (bindings 0) rhs (bindings 1)]
     `(let [res# ~rhs]
-       (when (s/valid? ~spec res#)
+       (when (catch-errors-valid? ~spec res#)
          (let [~form res#]
            ~then)))))
 
@@ -86,7 +86,6 @@
           (let [~form res#]
             ~then)
           (throw-spec ~spec res#))))))
-
 
 (defmacro spec-if-let*
   ([bindings then else]
@@ -155,43 +154,6 @@
      `(spec-when-let!* [~(first bindings) ~(second bindings)]
         (spec-when-lets! ~(drop 2 bindings) ~then))
      then)))
-
-;; (defmacro some->
-;;   "When expr is not nil, threads it into the first form (via ->),
-;;   and when that result is not nil, through the next etc"
-;;   {:added "1.5"}
-;;   [expr & forms]
-;;   (let [g (gensym)
-;;         steps (map (fn [step] `(if (nil? ~g) nil (-> ~g ~step)))
-;;                    forms)]
-;;     `(let [~g ~expr
-;;            ~@(interleave (repeat g) (butlast steps))]
-;;        ~(if (empty? steps)
-;;           g
-;;           (last steps)))))
-
-(defmacro spec-some->
-  "Similar to `some->` but `forms` is a sequence of clauses.
-
-  (spec-some-> <expr>
-               <spec-1> <form-1>
-               <spec-2> <form-2>
-               ...
-               <spec-n> <form-n>)
-
-  Each <spec> is treated as a pre-condition.
-  When expr conforms to the supplied spec, threads it into the first form (via ->),
-  and when that result conforms, through the next etc"
-  [expr & forms]
-  (let [g (gensym)
-        steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g) (-> ~g ~step) nil))
-                   (partition 2 forms))]
-    `(let [~g ~expr
-           ~@(interleave (repeat g) (butlast steps))]
-       ~(if (empty? steps)
-          g
-          (last steps)))))
-
 
 (defmacro spec-some->
   "Similar to `some->` but `forms` is a sequence of clauses.

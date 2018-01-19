@@ -17,6 +17,8 @@
 (deftest spec-if-let-test
   (is (= :ok
          (spec-if-let even? [x 2] :ok :err)))
+  (is (= :err
+         (spec-if-let even? [x nil] :ok :err)))
   (is (= :ok
          (spec-if-let ::even [x 2] :ok :err)))
   (is (= :err
