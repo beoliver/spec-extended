@@ -21,7 +21,7 @@ This begs the question, should we have provided a *stricter* `spec`? Perhaps som
 (s/def ::my-stricter-even (s/and number? even?)) ;;note the importance of order
 ```
 Or could we *relax* the notion of validity (i.e don't throw an exception)
-```
+```clojure
 (defmacro catch-errors-valid?
   [spec expr]
   `(try (s/valid? ~spec ~expr)
