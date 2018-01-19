@@ -6,6 +6,18 @@ Aims to provide spec extended versions of clojure's conditional and threading ma
 
 In all of the following examples `clojure.spec` has been impoted as `s`, while `spec-extended.core` has been imported as `se`.
 
+## Properties
+
+Lets assume that we have defined some spec, say:
+```clojure
+(s/def ::my-even even?)
+```
+The call `(s/valid? ::my-even 0)` will return `true` while `(s/valid? ::my-even 1)` will return `false`. If however we try the following `(s/valid? ::my-even nil)` we are greeted with the following:
+```clojure
+IllegalArgumentException Argument must be an integer:   clojure.core/even? (core.clj:1383)
+```
+
+
 ### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
 
