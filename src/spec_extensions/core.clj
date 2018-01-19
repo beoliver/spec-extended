@@ -1,8 +1,6 @@
 (ns spec-extensions.core
-  (:require [clojure.spec :as s]))
-
-(defn throw-spec [spec value]
-  (throw (ex-info "value did not conform to spec" {:spec spec :value value})))
+  (:require [clojure.spec :as s]
+            [spec-extensions.errors :refer [throw-spec catch-errors-valid?]]))
 
 (declare spec-if-let)
 (declare spec-if-lets)
@@ -88,7 +86,7 @@
           (throw-spec ~spec res#))))))
 
 
-(defmacro ^{:private true} spec-if-let*
+(defmacro spec-if-let*
   ([bindings then else]
    (let [bindings' (bindings 0)
          spec (bindings 1)
@@ -100,7 +98,7 @@
             ~then)
           ~else)))))
 
-(defmacro ^{:private true} spec-when-let!*
+(defmacro spec-when-let!*
   ([bindings then else]
    (let [bindings' (bindings 0)
          spec (bindings 1)
@@ -119,6 +117,8 @@
   example
   (spec-if-lets [[x 1] odd? [y 2] ::my-spec] (+ x y) :boop)
   "
+  ([bindings then]
+   `(spec-if-lets ~bindings ~then nil))
   ([bindings then else]
    (if (seq bindings)
      `(spec-if-let* [~(first bindings) ~(second bindings)]
@@ -154,6 +154,20 @@
         (spec-when-lets! ~(drop 2 bindings) ~then))
      then)))
 
+;; (defmacro some->
+;;   "When expr is not nil, threads it into the first form (via ->),
+;;   and when that result is not nil, through the next etc"
+;;   {:added "1.5"}
+;;   [expr & forms]
+;;   (let [g (gensym)
+;;         steps (map (fn [step] `(if (nil? ~g) nil (-> ~g ~step)))
+;;                    forms)]
+;;     `(let [~g ~expr
+;;            ~@(interleave (repeat g) (butlast steps))]
+;;        ~(if (empty? steps)
+;;           g
+;;           (last steps)))))
+
 (defmacro spec-some->
   "Similar to `some->` but `forms` is a sequence of clauses.
 
@@ -176,6 +190,61 @@
           g
           (last steps)))))
 
+(defmacro spec-some->
+  "Similar to `some->` but `forms` is a sequence of clauses.
+
+  (spec-some-> <expr>
+               <spec-1> <form-1>
+               <spec-2> <form-2>
+               ...
+               <spec-n> <form-n>)
+
+  Each <spec> is treated as a pre-condition.
+  When expr conforms to the supplied spec, threads it into the first form (via ->),
+  and when that result conforms, through the next etc.
+
+  As soon as a pre-condition fails, the execution is aborted.
+  This avoids the possiblity that a `nil` is propogated though the chain.
+  "
+  [expr & forms]
+  (let [g (gensym)
+        steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g)
+                                        (-> ~g ~step)
+                                        (throw (Exception.))))
+                   (partition 2 forms))]
+    `(try (let [~g ~expr
+                ~@(interleave (repeat g) (butlast steps))]
+            ~(if (empty? steps)
+               g
+               (last steps)))
+          (catch Exception e# nil))))
+
+(defmacro spec-some->>
+  "Similar to `some->>` but `forms` is a sequence of clauses.
+
+   (spec-some->> <expr>
+                 <spec-1> <form-1>
+                 <spec-2> <form-2>
+                 ...
+                 <spec-n> <form-n>)
+
+   Each <spec> is treated as a pre-condition.
+   When expr conforms to the supplied spec, threads it into the first form (via ->>),
+   and when that result conforms, through the next etc
+  "
+  [expr & forms]
+  (let [g (gensym)
+        steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g)
+                                        (->> ~g ~step)
+                                        (throw (Exception.))))
+                   (partition 2 forms))]
+    `(try (let [~g ~expr
+                ~@(interleave (repeat g) (butlast steps))]
+            ~(if (empty? steps)
+               g
+               (last steps)))
+          (catch Exception e# nil))))
+
 (defmacro spec-some->!
   "Similar to `some->` but `forms` is a sequence of clauses.
    If a spec test is not valid, throws an `ex-info` error
@@ -195,30 +264,6 @@
         steps (map (fn [[spec step]] `(if (s/valid? ~spec ~g)
                                         (-> ~g ~step)
                                         (throw-spec ~spec ~g)))
-                   (partition 2 forms))]
-    `(let [~g ~expr
-           ~@(interleave (repeat g) (butlast steps))]
-       ~(if (empty? steps)
-          g
-          (last steps)))))
-
-(defmacro spec-some->>
-  "Similar to `some->>` but `forms` is a sequence of clauses.
-
-   (spec-some->> <expr>
-                 <spec-1> <form-1>
-                 <spec-2> <form-2>
-                 ...
-                 <spec-n> <form-n>)
-
-   Each <spec> is treated as a pre-condition.
-   When expr conforms to the supplied spec, threads it into the first form (via ->>),
-   and when that result conforms, through the next etc
-  "
-  [expr & forms]
-  (let [g (gensym)
-        steps (map (fn [[spec step]] `(when (s/valid? ~spec ~g)
-                                        (->> ~g ~step)))
                    (partition 2 forms))]
     `(let [~g ~expr
            ~@(interleave (repeat g) (butlast steps))]
