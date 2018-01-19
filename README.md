@@ -1,6 +1,21 @@
 # spec-extensions
 
-A Clojure library designed to ... well, that part is up to you.
+A library that extends `clojure.spec`
+
+Aims to provide spec extended versions of clojures branching and threading macros.
+
+```clojure
+(ns my-project
+  (:require [clojure.spec :as s]
+            [spec-extensions.core :as se]))
+
+(s/def ::my-even even?)
+
+(se/as-> 100 $
+         (s/and number? ::my-even) (+ $ 50)
+	 even? (do (println "hello from spec-extentions") $)
+	 odd? (println "this will never execute"))
+```
 
 ## Usage
 
