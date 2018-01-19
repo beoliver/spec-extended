@@ -2,9 +2,9 @@
 
 A library that extends `clojure.spec`
 
-Aims to provide spec extended versions of clojures branching and threading macros.
+Aims to provide spec extended versions of clojure's conditional and threading macros.
 
-In all of the following examples `spec` has been impoted as `s`, while `spec-extended` has been imported as `se`.
+In all of the following examples `clojure.spec` has been impoted as `s`, while `spec-extended.core` has been imported as `se`.
 
 ### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
