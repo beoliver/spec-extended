@@ -11,14 +11,14 @@ The most trivial and possibly most useful macro is the spec extended `if-let` fo
   (:require [clojure.spec :as s]
             [spec-extensions.core :as se]))
 
-(s/def ::even even?)
+(s/def ::gt-than-fifty #(> % 50))
 
-(se/if-let ::even [x (rand-int 100)]
-  (println "even value was" x)
-  (println "number must have been odd"))
+(se/if-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
+  (println "valid value was" x)
+  (println "the else branch"))
 ```
 
-In the above example `::even` is treated as a post condition. `(rand-int 100)` is computed, and if the resulting value is `spec/valid?` with respect to `::even` the *then* branch is executed.
+In the above example we composed a spec *on the fly* and treated it as a post condition. `(rand-int 100)` is computed, and if the resulting value is `spec/valid?` with respect to `::even` the *then* branch is executed.
 
 
 ```clojure
