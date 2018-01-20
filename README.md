@@ -18,7 +18,7 @@ What happens when you take conditional threading, for example `some->` and exten
 Spec based composable workflows. Instead of having to over specify the input and output parameters for each function,
 **spec-extended** allows you to compose existing functions but with additional guarantees that a spec might provide.
 
-As clojure does not really *do* types, instead of tring to treat it as a typed language we can think of it as something else. What that is, and what spec will lead to is not clear. When not restricted to types, functions and procedures are often *context sensitive*. While this is also true for typed languages clojure allows us to take that to extremes. Having the ability to create workflows that enforce certain invariants is one approach.
+As clojure does not really *do* types, instead of tring to treat it as a typed language we can think of it as something else. What that is, and what spec will lead to is not clear. Functions and procedures are often *context sensitive* and while this is also true for typed languages clojure allows us to take that to extremes. Having the ability to create workflows and compose those workflows, while enforcing certain invariants is just one way of exploring the space.
 
 ## Properties
 
