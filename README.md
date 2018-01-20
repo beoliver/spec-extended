@@ -12,6 +12,12 @@ In all of the following examples `clojure.spec` has been impoted as `s`, while `
   (println "valid value was" x))
 ```
 
+## Rationale
+
+What happens when you take conditional threading, for example `some->` and extend it to handle `clojure.spec` definitions?
+Spec based composable workflows. Instead of having to over specify the input and output parameters for each function,
+**spec-extended** allows you to compose existing functions but with additional guarantees that a spec might provide.
+
 ## Properties
 
 Lets assume that we have defined some spec, say:
@@ -79,6 +85,8 @@ For this reason, `spec-extended` aims to provide three versions of each macro fo
 - A version that hides validation exceptions. An exception thrown during validation is treated in the same way as `(s/valid? <expr>)` returning `false`.
 - A version with a single `!` suffix that exposes validation exceptions.
 - A version with a double `!!` suffix that exposes validation exceptions and throws an exception when some entity does not conform to a spec.
+
+You can think of each `!` as introducing a level of *strictness*.
 
 ### scope of variables
 
