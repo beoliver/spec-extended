@@ -48,11 +48,11 @@ never the less it should be considered.
 If we assume that our specs are **pure**
 
  | pure  | total | logical errors | throw exception |
- | ---   | :---: | :---:          | :---:           |
+ | :---: | :---: | :---:          | :---:           |
  | true  | true  | false          | false           |
  | true  | true  | true           | true            |
  | false | true  | false          | true            |
- | false | true  | false          | true
+ | ...   | ...   | ...            | ...             |
 
 
 This begs the question... Should we provide a *stricter* spec? i.e should we ensure that the spec is **total** - Perhaps something like:
