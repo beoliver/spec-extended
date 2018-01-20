@@ -130,18 +130,19 @@ The standard `some->` and `some->>` threading macros uses *nil punning* - it is 
 The **spec extended** version of these macros takes the form:
 
 ```clojure
-(some-> <expr>
-        <spec> <form>
-        <spec> <form>
+(some-> <expr> <spec>
+        <form> <spec>
+        <form> <spec>
         ...
-        <spec> <form>)
+        <form> <spec>)
 ```
-Each `<spec>` is treated as a pre condition for each `<form>`. For the exception hiding variant as soon as a `<spec>` is not `s/valid?` the value `nil` is returned (even if the next spec is `nil?`).
+Each `<spec>` is treated as a post condition for each `<form>`. The initial `<spec>` validates the input or initial `<expr>`.
 
 ```clojure
-(se/some-> 0
-           even? inc
-           odd?  inc)
+(se/some-> 0   even?
+           inc odd?
+           inc even?
+	   inc odd?)
 ```
 
 ### `as->`

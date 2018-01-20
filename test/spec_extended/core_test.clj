@@ -82,34 +82,51 @@
           (se/spec-when-let! even? [x 2] :ok))))
   (is (= :ok
          (se/spec-when-let! ::even [x 2] :ok)))
-  (is (= :spec-extensions.errors/invalid
+  (is (= :spec-extended.errors/invalid
          (try-spec-expr
           (se/spec-when-let! odd? [x 2] :ok))))
   (is (= :ok
          (se/spec-when-let! ::even-string? [x "abcd"] :ok)))
-  (is (= :spec-extensions.errors/invalid
+  (is (= :spec-extended.errors/invalid
          (try-spec-expr
           (se/spec-when-let! ::even-string? [x "abc"] :ok))))
-  (is (= :spec-extensions.errors/invalid
+  (is (= :spec-extended.errors/invalid
          (try-spec-expr (se/spec-when-let! ::even-string? [x 2] :ok)))))
+
+
+;; (deftest some->test
+;;   (is (= 2 (se/some-> 0
+;;                       even? inc
+;;                       odd?  inc)))
+;;   (is (nil? (se/some-> 0
+;;                        even? inc
+;;                        even?  inc)))
+;;   (is (nil? (se/some-> 0
+;;                        odd? inc
+;;                        odd? inc)))
+;;   (testing "any? does not check"
+;;     (is (nil? (se/some-> nil
+;;                          number? inc)))
+;;     (is (= :err (try (se/some-> nil
+;;                                 any? inc)
+;;                      (catch Exception e :err))))))
+
 
 
 (deftest some->test
   (is (= 2 (se/some-> 0
                       even? inc
-                      odd?  inc)))
-  (is (nil? (se/some-> 0
-                       even? inc
-                       even?  inc)))
-  (is (nil? (se/some-> 0
-                       odd? inc
-                       odd? inc)))
-  (testing "any? does not check"
-    (is (nil? (se/some-> nil
-                         number? inc)))
-    (is (= :err (try (se/some-> nil
-                                any? inc)
-                     (catch Exception e :err))))))
+                      odd? inc
+                      even?)))
+  (is (nil? (se/some-> 0 odd?
+                       inc odd?
+                       inc even?)))
+  (is (nil? (se/some-> 0 even?
+                       inc even?
+                       inc even?)))
+  (is (nil? (se/some-> 0 even?
+                       inc odd?
+                       inc odd?))))
 
 
 

@@ -1,28 +1,10 @@
-(ns spec-extensded.core
+(ns spec-extended.core
   "common clojure macros extended to work with specs."
   (:require [clojure.spec :as s]
             [spec-extended.errors :refer [throw-spec
                                           catch-errors-valid?
                                           only-catch-spec-errors]])
   (:refer-clojure :exclude [if-let when-let some-> some->> as->]))
-
-(declare if-let)
-(declare if-lets)
-(declare when-let)
-(declare when-lets)
-
-(declare spec-when-let!)
-(declare spec-when-lets!)
-
-(declare some->)
-
-(declare spec-some->!)
-(declare spec-some->>)
-(declare spec-some->>!)
-(declare spec->)
-(declare spec->!)
-(declare spec->>)
-(declare spec->>!)
 
 (defmacro if-let
   "an extension of `if-let`. Only executes the `then` when the bound value
@@ -160,37 +142,37 @@
         (spec-when-lets! ~(drop 2 bindings) ~then))
      then)))
 
+
 (defmacro some->
   "Similar to `some->` but `forms` is a sequence of clauses.
 
-  (some-> <expr>
-          <spec> <form>
-          <spec> <form>
-          ...
-          <spec> <form>)
+  (some*-> <expr> <spec>
+           <form> <spec>
+           <form> <spec>
+           ...
+           <form> <spec>)
 
-  Each <spec> is treated as a pre-condition.
-  When expr conforms to the supplied spec, threads it into the first form (via ->),
-  and when that result conforms, through the next etc.
-
-  As soon as a pre-condition fails, the execution is aborted.
-  This avoids the possiblity that a `nil` is propogated though the chain.
-  If an excption is thrown when persofming a spec check then `nil` is returned,
-  however all other errors are caught and re-thrown
+  Each <spec> is treated as a post-condition.
   "
-  [expr & forms]
+  [expr spec & forms]
   (let [g (gensym)
-        steps (map (fn [[spec step]] `(if (try (s/valid? ~spec ~g)
-                                               (catch Exception e#
-                                                 (throw-spec ~spec ~g)))
-                                        (-> ~g ~step)
-                                        (throw-spec ~spec ~g)))
+        steps (map (fn [[step spec]] `(let [temp# (-> ~g ~step)]
+                                        (if (try (s/valid? ~spec temp#)
+                                                 (catch Exception e#
+                                                   (throw-spec ~spec temp#)))
+                                          temp#
+                                          (throw-spec ~spec temp#))))
                    (partition 2 forms))]
-    `(only-catch-spec-errors (let [~g ~expr
-                                   ~@(interleave (repeat g) (butlast steps))]
-                               ~(if (empty? steps)
-                                  g
-                                  (last steps))))))
+    `(only-catch-spec-errors (let [~g ~expr]
+                               (if (try (s/valid? ~spec ~g)
+                                        (catch Exception e#
+                                          (throw-spec ~spec ~g)))
+                                 (let [~@(interleave (repeat g) (butlast steps))]
+                                   ~(if (empty? steps)
+                                      g
+                                      (last steps)))
+                                 (throw-spec ~spec ~g))))))
+
 
 (defmacro some->>
   "Similar to `some->>` but `forms` is a sequence of clauses.
@@ -441,3 +423,36 @@
                                ~(if (empty? steps)
                                   name
                                   (last steps))))))
+
+
+;; (defmacro some->
+;;   "Similar to `some->` but `forms` is a sequence of clauses.
+
+;;   (some-> <expr>
+;;           <spec> <form>
+;;           <spec> <form>
+;;           ...
+;;           <spec> <form>)
+
+;;   Each <spec> is treated as a pre-condition.
+;;   When expr conforms to the supplied spec, threads it into the first form (via ->),
+;;   and when that result conforms, through the next etc.
+
+;;   As soon as a pre-condition fails, the execution is aborted.
+;;   This avoids the possiblity that a `nil` is propogated though the chain.
+;;   If an excption is thrown when persofming a spec check then `nil` is returned,
+;;   however all other errors are caught and re-thrown
+;;   "
+;;   [expr & forms]
+;;   (let [g (gensym)
+;;         steps (map (fn [[spec step]] `(if (try (s/valid? ~spec ~g)
+;;                                                (catch Exception e#
+;;                                                  (throw-spec ~spec ~g)))
+;;                                         (-> ~g ~step)
+;;                                         (throw-spec ~spec ~g)))
+;;                    (partition 2 forms))]
+;;     `(only-catch-spec-errors (let [~g ~expr
+;;                                    ~@(interleave (repeat g) (butlast steps))]
+;;                                ~(if (empty? steps)
+;;                                   g
+;;                                   (last steps))))))
