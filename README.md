@@ -48,13 +48,9 @@ never the less it should be considered.
 If we assume that our specs are **pure**
 
  | pure  | total | logical errors | throw exception |
- | ---   | ---   | ---            | ---             |
  | true  | true  | false          | false           |
- | ---   | ---   | ---            | ---             |
  | true  | true  | true           | true            |
- | ---   | ---   | ---            | ---             |
  | false | true  | false          | true            |
- | ---   | ---   | ---            | ---             |
  | false | true  | false          | true
 
 
