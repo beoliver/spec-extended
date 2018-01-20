@@ -71,9 +71,6 @@ never the less it should be considered.
  | pure  | total | logical errors | may throw exception |
  | :---: | :---: | :---:          | :---:           |
  | true  | true  | false          | false           |
- | true  | true  | true           | true            |
- | false | true  | false          | true            |
- | true  | false | false          | true            |
  | ...   | ...   | ...            | true            |
 
 The logical errors table captures for example *division by zero* and other related issues.
