@@ -41,6 +41,29 @@ Now, when writing a *spec* `p` that is **total** with respect to `T` it must hav
 p : T -> {true, false}
 ```
 
+This begs the question... Should it be the job of the deveolper to provide a *stricter* spec? i.e ensure that the spec is **total** - Perhaps something like:
+```clojure
+(s/def ::my-stricter-even (s/and number? even?)) ; note the importance of order
+```
+Or should the library provide some extended (perhaps implicit) functionality? For example:
+```clojure
+(defn total-valid?
+  [spec expr]
+  (try (s/valid? spec expr)
+       (catch Exception _ false)))
+```
+This function acheives a kind of totality - return values are guaranteed to be `true` or `false` for any input element, however
+how do we handle the case of a spec that throws an exception not because of a type error, but because of some faulty logic?
+```clojure
+(s/def ::silly-spec
+  (s/and even?
+         (fn [x] (= x (/ x 0))))
+```
+In this example for all even numbers it will perform a division by zero resulting in an exception. As far as a user of `total-valid?` is aware,
+no value will ever satisfy this spec. Would the exception have made debugging easier? probably! Perhaps we could examine the stack trace and only
+hide `IllegalArgument Exception`, but it is hard to be consistent with this approach. The take away here is that while a library can provide
+mechanisms for making partial functions total, some information may be lost in the process.
+
 ### But what about Exceptions?
 Should testing to see if a value conforms to a spec ever cause an exception to be thrown? Perhaps this is a philosophical question, but
 never the less it should be considered.
@@ -53,29 +76,14 @@ never the less it should be considered.
  | true  | false | false          | true            |
  | ...   | ...   | ...            | ...             |
 
-
-This begs the question... Should we provide a *stricter* spec? i.e should we ensure that the spec is **total** - Perhaps something like:
-```clojure
-(s/def ::my-stricter-even (s/and number? even?)) ; note the importance of order
-```
+The logical errors table captures for example *division by zero* and other related issues.
 
 Ideally we want some kind of function that ensures that our predicates are total
 `(forall S \subseteq C*) make-predicate-total : (S -> Boolean) -> (C* -> Boolean)
 If we were only concerned with predicates then this would be simple, but we need to deal with `specs`. The simplest solution is to write a new `valid?` function
 such that if `spec : (S -> Boolean)` then `(parital total-valid? spec) : (C* -> Boolean)`
-```clojure
-(defn total-valid?
-  [spec expr]
-  (try (s/valid? spec expr)
-       (catch Exception _ false)))
-```
-Note however this this approach does have its drawbacks. Assume that we have a spec that can throw an exception, in this case for all even numbers it will perform a division by zero.
-```clojure
-(s/def ::silly-spec
-  (s/and even?
-         (fn [x] (/ x 0))))
-```
-With the `total-valid?` function we will just return `false`. Perhaps we could examine the stack trace and only hide `IllegalArgument Exception`, but it is hard to be consistent with this approach.
+
+Note however this this approach does have its drawbacks.
 
 All approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence, an error thrown during validation is most likely type based, structural or due to some logical error in the spec itself (division by 0). However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
 
