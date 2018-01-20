@@ -136,7 +136,7 @@ The **spec extended** version of these macros takes the form:
         ...
         <spec> <form>)
 ```
-Each `<spec>` is treated as a pre condition for each `<form>`. As soon as a `<spec>` is not `s/valid?` the value `nil` is returned (even if the next spec is `nil?`). One important aspect is that as testing a spec can result in an error being thrown, `spec-extended` treats any exceptions thrown in the validation process as **invalid**. If an exception is thrown while evaluating a `<form>` then the error will be thrown.
+Each `<spec>` is treated as a pre condition for each `<form>`. For the exception hiding variant as soon as a `<spec>` is not `s/valid?` the value `nil` is returned (even if the next spec is `nil?`).
 
 ```clojure
 (se/some-> 0
