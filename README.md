@@ -27,14 +27,14 @@ This begs the question... Should we provide a *stricter* spec? Perhaps something
 ```clojure
 (s/def ::my-stricter-even (s/and number? even?)) ;;note the importance of order
 ```
-Should we *relax* the notion of validity (i.e don't throw an exception)
+Should we *relax* the notion of validity (i.e don't throw an exception)?
 ```clojure
 (defmacro catch-errors-valid?
   [spec expr]
   `(try (s/valid? ~spec ~expr)
         (catch Exception e# nil)))
 ```
-Or, was this the `correct` response?
+Or, was this the *correct* response?
 
 All three approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence, an error thrown during validation is most likely type based or structural. However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
 
@@ -57,7 +57,21 @@ In the above example `(rand-int 100)` is computed, and if the resulting value is
 ```clojure
 (se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
   (println "valid value was" x))
+
+As mentioned in the Properties section, there are `if-let!` and `if-let!!` variants
+
+```clojure
+;; this will throw an error due to (even? nil)
+(se/if-let! even? [x nil]
+  (println "valid value was" x)
+  (println "the else branch"))
+
+;; this will throw an error due to (even? 1) being false
+(se/if-let!! even? [x 1]
+  (println "valid value was" x)
+  (println "the else branch"))
 ```
+
 ### `some->` and `some->>`
 The standard `some->` and `some->>` threading macros uses *nil punning* - it is assumed that if any form returns `nil` then no more forms should be evaluated.
 
