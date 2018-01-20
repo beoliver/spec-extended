@@ -57,7 +57,7 @@ In the above example `(rand-int 100)` is computed, and if the resulting value is
 ```clojure
 (se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
   (println "valid value was" x))
-
+```
 As mentioned in the Properties section, there are `if-let!` and `if-let!!` variants
 
 ```clojure
