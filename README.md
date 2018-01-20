@@ -64,7 +64,7 @@ no value will ever satisfy this spec. Would the exception have made debugging ea
 hide `IllegalArgument Exception`, but it is hard to be consistent with this approach. The take away here is that while a library can provide
 mechanisms for making partial functions total, some information may be lost in the process.
 
-### But what about Exceptions?
+### So... how do you handle Exceptions?
 Should testing to see if a value conforms to a spec ever cause an exception to be thrown? Perhaps this is a philosophical question, but
 never the less it should be considered.
 
@@ -74,21 +74,12 @@ never the less it should be considered.
  | true  | true  | true           | true            |
  | false | true  | false          | true            |
  | true  | false | false          | true            |
- | ...   | ...   | ...            | ...             |
+ | ...   | ...   | ...            | true            |
 
 The logical errors table captures for example *division by zero* and other related issues.
 
-Ideally we want some kind of function that ensures that our predicates are total
-`(forall S \subseteq C*) make-predicate-total : (S -> Boolean) -> (C* -> Boolean)
-If we were only concerned with predicates then this would be simple, but we need to deal with `specs`. The simplest solution is to write a new `valid?` function
-such that if `spec : (S -> Boolean)` then `(parital total-valid? spec) : (C* -> Boolean)`
-
-Note however this this approach does have its drawbacks.
-
-All approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence, an error thrown during validation is most likely type based, structural or due to some logical error in the spec itself (division by 0). However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
-
 For this reason, `spec-extended` aims to provide three versions of each macro form.
-- A version that hides validation exceptions. An exception thrown during validation is treated in the same way as `(not (s/valid? <expr>))`.
+- A version that hides validation exceptions. An exception thrown during validation is treated in the same way as `(s/valid? <expr>)` returning `false`.
 - A version with a single `!` suffix that exposes validation exceptions.
 - A version with a double `!!` suffix that exposes validation exceptions and throws an exception when some entity does not conform to a spec.
 
