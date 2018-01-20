@@ -25,13 +25,22 @@ IllegalArgumentException Argument must be an integer:   clojure.core/even? (core
 ```
 
 While clojure does not expose a type system in the same way as ML (or Java etc) it is usefull to think abstractly for
-a minute.
+a minute. Instead of talking about types, we will talk about sets.
 
-- A function `f : X -> Y` is said to be **total** if for every element x in X it maps x to some y in Y.
-- A function `f : X -> Y` is said to be **partial** there is an element x in X that it does not map to some y in Y.
+- A function `f : X -> Y` is said to be **total** if for every element x in X then f(x) in Y.
+- A function `f : X -> Y` is said to be **partial** there is an element x in X then f(x) is not in Y.
 Note that **partial** in this context is different from `(partial f & args)` which refers to **partial application**
 
-Let's assume that we have a set `T` of all valid clojure **values**, for eaxmple `1`, `["a" :foo (fn [x] x)]`, ...
+Let's assume that we have a set `T` that contains **every single valid clojure value**
+```clojure
+1, {:hello "world"}, ["a" :foo (fn [x] x) java.lang.Float], ...
+```
+
+Now, when writing a *spec* `p` that is **total** with respect to `T` it must have the from
+```haskell
+p : T -> {true, false}
+```
+
 A spec `p` is **partial** if  `p : S -> Boolean` where `S \subseteq T` where as a spec is **total** if  `p : T -> Boolean`
 All this means is that when a spec is **total** it will not throw an exception.
 
