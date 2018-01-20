@@ -23,25 +23,46 @@ If however we try the following `(s/valid? ::my-even nil)` we are greeted with t
 ```clojure
 IllegalArgumentException Argument must be an integer:   clojure.core/even? (core.clj:1383)
 ```
-This begs the question... Should we provide a *stricter* spec? Perhaps something like:
-```clojure
-(s/def ::my-stricter-even (s/and number? even?)) ;;note the importance of order
-```
-Should we *relax* the notion of validity (i.e don't throw an exception)?
-```clojure
-(defmacro catch-errors-valid?
-  [spec expr]
-  `(try (s/valid? ~spec ~expr)
-        (catch Exception e# nil)))
-```
-Or, was this the *correct* response?
 
-All three approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence, an error thrown during validation is most likely type based or structural. However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
+Let's assume that we have a set `C*` of all valid clojure **values**, for eaxmple `1`, `["a" :foo (fn [x] x)]`, ...
+A spec `p` is **partial** if  `p : S -> Boolean` where `S \subseteq C*` where as a spec is **left-total** if  `p : C* -> Boolean`
+All this means is that when a spec is **total** it will not throw an exception.
+
+
+This begs the question... Should we provide a *stricter* spec? i.e should we ensure that the spec is **total** - Perhaps something like:
+```clojure
+(s/def ::my-stricter-even (s/and number? even?)) ; note the importance of order
+```
+
+Ideally we want some kind of function that ensures that our predicates are total
+`(forall S \subseteq C*) make-predicate-total : (S -> Boolean) -> (C* -> Boolean)
+If we were only concerned with predicates then this would be simple, but we need to deal with `specs`. The simplest solution is to write a new `valid?` function
+such that if `spec : (S -> Boolean)` then `(parital total-valid? spec) : (C* -> Boolean)`
+```clojure
+(defn total-valid?
+  [spec expr]
+  (try (s/valid? spec expr)
+       (catch Exception _ false)))
+```
+Note however this this approach does have its drawbacks. Assume that we have a spec that can throw an exception, in this case for all even numbers it will perform a division by zero.
+```clojure
+(s/def ::silly-spec
+  (s/and even?
+         (fn [x] (/ x 0))))
+```
+With the `total-valid?` function we will just return `false`. Perhaps we could examine the stack trace and only hide `IllegalArgument Exception`, but it is hard to be consistent with this approach.
+
+All approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence, an error thrown during validation is most likely type based, structural or due to some logical error in the spec itself (division by 0). However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
 
 For this reason, `spec-extended` aims to provide three versions of each macro form.
 - A version that hides validation exceptions. An exception thrown during validation is treated in the same way as `(not (s/valid? <expr>))`.
 - A version with a single `!` suffix that exposes validation exceptions.
 - A version with a double `!!` suffix that exposes validation exceptions and throws an exception when some entity does not conform to a spec.
+
+### scope of variables
+
+As spec-extended macros introduce clauses, users should be aware of scoping implications. Most (all?) of clojures threading macros exapand into let statements. Clojure makes variables bound at position n in a let expresions available to subsequent expressions. This also means that bound variables are accessable by spec definitions.
+- Need to check, but if a spec refers to some **global** variable, and the let bindings introduce a variable that shadows that global, then it will be used in place. Will work on this, think about what is the best approach.
 
 ### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
