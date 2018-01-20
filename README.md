@@ -37,9 +37,9 @@ a minute. Instead of talking about types, we will talk about sets.
 
 - A function `f : X -> Y` is said to be **total** if for every element x in X, an element f(x) is in Y.
 - A function `f : X -> Y` is said to be **partial** if there is an element x in X where f(x) is not in Y.
-Note that **partial** in this context is different from `(partial f & args)` which refers to **partial application**
+Note that **partial** in this context is different from `(partial f & args)` which refers to **partial application**.
 
-Let's assume that we have a set `T` that contains **every single valid clojure value**
+Let's assume that we have an (infinite) set `T` that contains **every single valid clojure value**
 ```clojure
 1, {:hello "world"}, ["a" :foo (fn [x] x) java.lang.Float], ...
 ```
