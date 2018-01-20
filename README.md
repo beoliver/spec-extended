@@ -35,8 +35,8 @@ IllegalArgumentException Argument must be an integer:   clojure.core/even? (core
 While clojure does not expose a type system in the same way as ML (or Java etc) it is usefull to think abstractly for
 a minute. Instead of talking about types, we will talk about sets.
 
-- A function `f : X -> Y` is said to be **total** if for every element x in X then f(x) in Y.
-- A function `f : X -> Y` is said to be **partial** there is an element x in X then f(x) is not in Y.
+- A function `f : X -> Y` is said to be **total** if for every element x in X, an element f(x) is in Y.
+- A function `f : X -> Y` is said to be **partial** if there is an element x in X where f(x) is not in Y.
 Note that **partial** in this context is different from `(partial f & args)` which refers to **partial application**
 
 Let's assume that we have a set `T` that contains **every single valid clojure value**
