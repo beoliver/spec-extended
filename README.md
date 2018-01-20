@@ -41,8 +41,21 @@ Now, when writing a *spec* `p` that is **total** with respect to `T` it must hav
 p : T -> {true, false}
 ```
 
-A spec `p` is **partial** if  `p : S -> Boolean` where `S \subseteq T` where as a spec is **total** if  `p : T -> Boolean`
-All this means is that when a spec is **total** it will not throw an exception.
+### But what about Exceptions?
+Should testing to see if a value conforms to a spec ever cause an exception to be thrown? Perhaps this is a philosophical question, but
+never the less it should be considered.
+
+If we assume that our specs are **pure**
+
+ | pure | total | logical errors | throw exception
+--- | --- | --- | --- |---
+ | true | true | false | false
+ -- | --- | --- | --- |---
+ | true | true | true | true
+-- | --- | --- | --- |---
+ | false | true | flase | true
+ -- | --- | --- | --- |---
+ | false | true | flase | true
 
 
 This begs the question... Should we provide a *stricter* spec? i.e should we ensure that the spec is **total** - Perhaps something like:
