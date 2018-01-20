@@ -24,8 +24,15 @@ If however we try the following `(s/valid? ::my-even nil)` we are greeted with t
 IllegalArgumentException Argument must be an integer:   clojure.core/even? (core.clj:1383)
 ```
 
-Let's assume that we have a set `C*` of all valid clojure **values**, for eaxmple `1`, `["a" :foo (fn [x] x)]`, ...
-A spec `p` is **partial** if  `p : S -> Boolean` where `S \subseteq C*` where as a spec is **left-total** if  `p : C* -> Boolean`
+While clojure does not expose a type system in the same way as ML (or Java etc) it is usefull to think abstractly for
+a minute.
+
+- A function `f : X -> Y` is said to be **total** if for every element x in X it maps x to some y in Y.
+- A function `f : X -> Y` is said to be **partial** there is an element x in X that it does not map to some y in Y.
+Note that **partial** in this context is different from `(partial f & args)` which refers to **partial application**
+
+Let's assume that we have a set `T` of all valid clojure **values**, for eaxmple `1`, `["a" :foo (fn [x] x)]`, ...
+A spec `p` is **partial** if  `p : S -> Boolean` where `S \subseteq T` where as a spec is **total** if  `p : T -> Boolean`
 All this means is that when a spec is **total** it will not throw an exception.
 
 
