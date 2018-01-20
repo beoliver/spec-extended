@@ -1,10 +1,16 @@
 # spec-extended
 
-A library that extends `clojure.spec`
-
-Aims to provide spec extended versions of clojure's conditional and threading macros.
-
+A library that provides spec extended versions of clojure's conditional and threading macros.
 In all of the following examples `clojure.spec` has been impoted as `s`, while `spec-extended.core` has been imported as `se`.
+
+## Example
+
+```clojure
+(s/def ::gt-than-fifty #(> % 50))
+
+(se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
+  (println "valid value was" x))
+```
 
 ## Properties
 
@@ -12,27 +18,30 @@ Lets assume that we have defined some spec, say:
 ```clojure
 (s/def ::my-even even?)
 ```
-The call `(s/valid? ::my-even 0)` will return `true` while `(s/valid? ::my-even 1)` will return `false`. If however we try the following `(s/valid? ::my-even nil)` we are greeted with the following:
+The call `(s/valid? ::my-even 0)` will return `true` while `(s/valid? ::my-even 1)` will return `false`.
+If however we try the following `(s/valid? ::my-even nil)` we are greeted with the following:
 ```clojure
 IllegalArgumentException Argument must be an integer:   clojure.core/even? (core.clj:1383)
 ```
-This begs the question, should we have provided a *stricter* `spec`? Perhaps something like this:
+This begs the question... Should we provide a *stricter* spec? Perhaps something like:
 ```clojure
 (s/def ::my-stricter-even (s/and number? even?)) ;;note the importance of order
 ```
-Or should we *relax* the notion of validity (i.e don't throw an exception)
+Should we *relax* the notion of validity (i.e don't throw an exception)
 ```clojure
 (defmacro catch-errors-valid?
   [spec expr]
   `(try (s/valid? ~spec ~expr)
         (catch Exception e# nil)))
 ```
-Both approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence. However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
+Or, was this the `correct` response?
 
-For this reason, `spec-extended` aims to provide three versions of each macro
-- A version that hides validation exceptions - an exception thrown during validation is treated in the same way as `false`
-- A version `!` that exposes validation exceptions, but treats `(s/valid? <expr>)` returning `false` as **ok**
-- A version `!!` that exposes validation exceptions and treats `(s/valid? <expr>)` returning `false` as an error.
+All three approaches have their benefits and their drawbacks. If our specs are **pure** then catching exceptions is of no real consequence, an error thrown during validation is most likely type based or structural. However, if our spec uses some form of state, it would probably be wise to expose the error. Indeed, in some cirsumstances it would be very nice to know when our system is and is not acting as expected.
+
+For this reason, `spec-extended` aims to provide three versions of each macro form.
+- A version that hides validation exceptions. An exception thrown during validation is treated in the same way as `(not (s/valid? <expr>))`.
+- A version with a single `!` suffix that exposes validation exceptions.
+- A version with a double `!!` suffix that exposes validation exceptions and throws an exception when some entity does not conform to a spec.
 
 ### `if-let` and `when-let`
 The most trivial and possibly most useful macro is the spec extended `if-let` form.
