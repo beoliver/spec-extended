@@ -45,13 +45,12 @@ p : T -> {true, false}
 Should testing to see if a value conforms to a spec ever cause an exception to be thrown? Perhaps this is a philosophical question, but
 never the less it should be considered.
 
-If we assume that our specs are **pure**
-
- | pure  | total | logical errors | throw exception |
+ | pure  | total | logical errors | may throw exception |
  | :---: | :---: | :---:          | :---:           |
  | true  | true  | false          | false           |
  | true  | true  | true           | true            |
  | false | true  | false          | true            |
+ | true  | false | false          | true            |
  | ...   | ...   | ...            | ...             |
 
 
