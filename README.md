@@ -110,19 +110,20 @@ In the above example `(rand-int 100)` is computed, and if the resulting value is
 (se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
   (println "valid value was" x))
 ```
-As mentioned in the Properties section, there are `if-let!` and `if-let!!` variants
+There are alse `if-let!` and `when-let!` versions that expose validation exceptions. However there is no `if-let!!` or `when-let!!` as there is always an else branch (`nil` by default).
 
 ```clojure
-;; this will throw an error due to (even? nil)
-(se/if-let! even? [x nil]
-  (println "valid value was" x)
-  (println "the else branch"))
+;; these examples will throw an exceptino due to (even? nil)
 
-;; this will throw an error due to (even? 1) being false
-(se/if-let!! even? [x 1]
-  (println "valid value was" x)
-  (println "the else branch"))
+(se/if-let! even? [x nil]
+  (println "this branch wont be executed becase of (even? nil)" x)
+  (println "neither will this!"))
+
+(se/when-let! even? [x nil]
+  (println "this branch wont be executed becase of (even? nil)" x))
 ```
+
+
 
 ### `some->` and `some->>`
 The standard `some->` and `some->>` threading macros uses *nil punning* - it is assumed that if any form returns `nil` then no more forms should be evaluated.
