@@ -152,7 +152,7 @@ If we wanted to replicate `clojure.core/some->` then the previous example would 
 (se/some-> 0   some?
            inc some?
            inc some?
-	   inc some?)
+	   inc any?)
 ```
 
 
