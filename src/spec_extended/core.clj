@@ -7,19 +7,8 @@
   (:refer-clojure :exclude [if-let when-let some-> some->> as->]))
 
 (defmacro if-let
-  "an extension of `if-let`. Only executes the `then` when the bound value
-   conforms to `spec`.
-
-   (if-let <spec> <bindings> <then>)
-   (if-let <spec> <bindings> <then> <else>)
-
-   like if-let, <bindings> is of the form [<var> <expr>]
-
-   examples
-   (if-let even? [x 10] (println x))
-   (if-let ::my-spec [x (some-fn)] (some-other-fn x) :else-branch)
-   (if-let nil? [x (println 1)] :printed :didnt-print)
-  "
+  "an extension of `clojure.core/if-let`
+  Will suppress any exceptions thrown during the validation process"
   ([spec bindings then]
    `(if-let ~spec ~bindings ~then nil))
   ([spec bindings then else]
@@ -30,20 +19,24 @@
             ~then)
           ~else)))))
 
+(defmacro if-let!
+  "an extension of `clojure.core/if-let`
+   Does not suppress exceptions thrown during the validation process"
+  ([spec bindings then]
+   `(if-let ~spec ~bindings ~then nil))
+  ([spec bindings then else]
+   (let [form (bindings 0) rhs (bindings 1)]
+     `(let [res# ~rhs]
+        (if (s/valid? ~spec res#)
+          (let [~form res#]
+            ~then)
+          ~else)))))
+
+;;; if-let!! would not make sense as there is an else branch (nil by default)
+
 (defmacro when-let
-  "an extension of `when-let`. Only executes the `then` when the bound value
-   conforms to `spec`.
-
-  (when-let <spec> <bindings> <then>)
-  (when-let <spec> <bindings> <then> <else>)
-
-  like when-let, <bindings> is of the form [<var> <expr>]
-
-  example
-  (when-let even? [x 10] (println x))
-  (if-let ::my-spec [x (some-fn)] (some-other-fn x))
-  (when-let nil? [x (println 1)] :printed)
-  "
+  "an extension of `clojure.core/when-let`
+  Will suppress any exceptions thrown during the validation process"
   [spec bindings then]
   (let [form (bindings 0) rhs (bindings 1)]
     `(let [res# ~rhs]
@@ -51,21 +44,21 @@
          (let [~form res#]
            ~then)))))
 
-(defmacro spec-when-let!
-  "an extension of `when-let`. Only executes the `then` when the bound value
-   conforms to `spec`. If the value is not `valid?` then an `ex-info` error
-   is thrown.
+(defmacro when-let!
+  "an extension of `clojure.core/when-let`
+  Does not suppress exceptions thrown during the validation process"
+  ([spec bindings then]
+   (let [form (bindings 0) rhs (bindings 1)]
+     `(let [res# ~rhs]
+        (if (s/valid? ~spec res#)
+          (let [~form res#]
+            ~then)
+          nil)))))
 
-   (spec-when-let! <spec> <bindings> <then>)
-   (spec-when-let! <spec> <bindings> <then> <else>)
-
-   like when-let, <bindings> is of the form [<var> <expr>]
-
-   example
-   (spec-when-let! even? [x 10] (println x))
-   (spec-when-let! ::my-spec [x (some-fn)] (some-other-fn x))
-   (spec-when-let! nil? [x (println 1)] :printed)
-  "
+(defmacro when-let!!
+  "an extension of `clojure.core/when-let`
+  Does not suppress exceptions thrown during the validation process.
+  If `binding` does not conform to `spec`, throws an exception"
   ([spec bindings then]
    (let [form (bindings 0) rhs (bindings 1)]
      `(let [res# ~rhs]
@@ -146,11 +139,11 @@
 (defmacro some->
   "Similar to `some->` but `forms` is a sequence of clauses.
 
-  (some*-> <expr> <spec>
-           <form> <spec>
-           <form> <spec>
-           ...
-           <form> <spec>)
+  (some-> <expr> <spec>
+          <form> <spec>
+          <form> <spec>
+          ...
+          <form> <spec>)
 
   Each <spec> is treated as a post-condition.
   "
