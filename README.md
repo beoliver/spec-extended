@@ -123,36 +123,34 @@ There are alse `if-let!` and `when-let!` versions that expose validation excepti
   (println "this branch wont be executed becase of (even? nil)" x))
 ```
 
+### `valid->` and `valid->>`
 
-
-### `some->` and `some->>`
-The standard `some->` and `some->>` threading macros uses *nil punning* - it is assumed that if any form returns `nil` then no more forms should be evaluated.
-
-The **spec extended** version of these macros takes the form:
+While the standard `some->` and `some->>` threading macros use *nil punning* - i.e it is assumed that if any form returns `nil` then no more forms should be evaluated.
+The `valid->` and `valid->>` threading macros takes a sequence of forms and specs.
 
 ```clojure
-(some-> <expr> <spec>
-        <form> <spec>
-        <form> <spec>
-        ...
-        <form> <spec>)
+(valid-> <expr> <spec>
+         <form> <spec>
+         <form> <spec>
+         ...
+         <form> <spec>)
 ```
 Each `<spec>` is treated as a post condition for each `<form>`. The initial `<spec>` validates the input or initial `<expr>`.
 
 ```clojure
-(se/some-> 0   even?
-           inc odd?
-           inc even?
-	   inc odd?)
+(se/valid-> 0   even?
+            inc odd?
+            inc even?
+	    inc odd?)
 ```
 
-If we wanted to replicate `clojure.core/some->` then the previous example would have been
+The threading macro `clojure.core/some->` can be seen as an instance of the `valid->` macro, take the following as an example.
 
 ```clojure
-(se/some-> 0   some?
-           inc some?
-           inc some?
-	   inc any?)
+(se/valid-> 0   some?
+            inc some?
+            inc some?
+	    inc some?)
 ```
 
 
