@@ -146,6 +146,16 @@ Each `<spec>` is treated as a post condition for each `<form>`. The initial `<sp
 	   inc odd?)
 ```
 
+If we wanted to replicate `clojure.core/some->` then the previous example would have been
+
+```clojure
+(se/some-> 0   some?
+           inc some?
+           inc some?
+	   inc some?)
+```
+
+
 ### `as->`
 
 ```clojure
