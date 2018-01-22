@@ -81,22 +81,7 @@ hide `IllegalArgument Exception`, but it is hard to be consistent with this appr
 mechanisms for making partial functions total, some information may be lost in the process.
 
 ### So... how do you handle Exceptions?
-Should testing to see if a value conforms to a spec ever cause an exception to be thrown? Perhaps this is a philosophical question, but
-never the less it should be considered.
-
- | pure  | total | logical errors | may throw exception |
- | :---: | :---: | :---:          | :---:           |
- | true  | true  | false          | false           |
- | ...   | ...   | ...            | true            |
-
-The logical errors table captures for example *division by zero* and other related issues.
-
-For this reason, `spec-extended` aims to provide three versions of each macro form.
-- A version that hides validation exceptions. An exception thrown during validation is treated in the same way as `(s/valid? <expr>)` returning `false`.
-- A version with a single `!` suffix that exposes validation exceptions.
-- A version with a double `!!` suffix that exposes validation exceptions and throws an exception when some entity does not conform to a spec.
-
-You can think of each `!` as introducing a level of *strictness*.
+`spec-extended` does not attempt to hide any validation errors.
 
 ### scope of variables
 
@@ -131,36 +116,25 @@ There are alse `if-let!` and `when-let!` versions that expose validation excepti
   (println "this branch wont be executed becase of (even? nil)" x))
 ```
 
-### `valid->` and `valid->>`
+### `conforms->` and `conforms->>`
 
-While the standard `some->` and `some->>` threading macros use *nil punning* - i.e it is assumed that if any form returns `nil` then no more forms should be evaluated.
-The `valid->` and `valid->>` threading macros takes a sequence of forms and specs.
+While the standard `some->` and `some->>` threading macros use *nil punning* - i.e it is assumed that if any form returns `nil` then no more forms should be evaluated, `conforms->` and `conforms->>` takes a different approach. Each value is tested to see if `(spec/conform x)` returns `:clojure.spec/invalid`. If this is the case then `:clojure.spec/invalid` will be returned.
 
-```clojure
-(valid-> <expr> <spec>
-         <form> <spec>
-         <form> <spec>
-         ...
-         <form> <spec>)
-```
-Each `<spec>` is treated as a post condition for each `<form>`. The initial `<spec>` validates the input or initial `<expr>`.
+To get a clearer idea we can macroexpand the form to see what it looks like under the hood.
 
 ```clojure
-(se/valid-> 0   even?
-            inc odd?
-            inc even?
-	    inc odd?)
+=> (macroexpand '(conforms-> (rand-int 100) even?
+                             inc            ::gt-than-fifty
+                             println        any?))
+
+(let* [G__17316 (clojure.spec/conform even? (rand-int 100))
+       G__17316 (if (clojure.spec/invalid? G__17316)
+                  G__17316
+                  (clojure.spec/conform :spec-extended.core/gt-than-fifty
+                                        (clojure.core/-> G__17316 inc)))]
+  (if (clojure.spec/invalid? G__17316) G__17316
+      (clojure.spec/conform any? (clojure.core/-> G__17316 println))))
 ```
-
-The threading macro `clojure.core/some->` can be seen as an instance of the `valid->` macro, take the following as an example.
-
-```clojure
-(se/valid-> 0   some?
-            inc some?
-            inc some?
-	    inc some?)
-```
-
 
 ### `as->`
 
