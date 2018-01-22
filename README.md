@@ -30,6 +30,9 @@ As clojure does not really *do* types, instead of tring to treat it as a typed l
 
 ## Properties
 
+`clojure.spec` uses a namespaced keyword `:clojure.spec/invalid` to represent when a value does not `clojure.spec/conform` to a given spec. While this has introduced some [issues](https://dev.clojure.org/jira/browse/CLJ-1966) this library treats `:clojure.spec/invalid` in a **special** way.
+
+
 Lets assume that we have defined some spec, say:
 ```clojure
 (s/def ::my-even even?)
