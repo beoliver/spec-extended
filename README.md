@@ -30,7 +30,39 @@ As clojure does not really *do* types, instead of tring to treat it as a typed l
 
 ## Properties
 
-`clojure.spec` uses a namespaced keyword `:clojure.spec/invalid` to represent when a value does not `clojure.spec/conform` to a given spec. While this has introduced some [issues](https://dev.clojure.org/jira/browse/CLJ-1966) this library treats `:clojure.spec/invalid` in a **special** way.
+`clojure.spec` uses a namespaced keyword `:clojure.spec/invalid` to represent when a value does not `clojure.spec/conform` to a given spec. While this has introduced some [issues](https://dev.clojure.org/jira/browse/CLJ-1966), this library treats `:clojure.spec/invalid` in a **special** way.
+
+```clojure
+> (def f #(some-> % inc inc))
+> (def g #(some-> % dec dec))
+> (def h (comp g f))
+
+> (h 1)
+1
+> (h 2)
+2
+> (h nil)
+nil
+> (h "hello")
+ClassCastException java.lang.String cannot be cast to java.lang.Number  clojure.lang.Numbers.dec (Numbers.java:120)
+```
+### Composition
+If `f` and `g` are forms construced using spec-extended then `(comp g f)` is a function using spec-extended.
+```clojure
+> (def f #(conforms-> % number? inc any? inc even?))
+> (def g #(conforms-> % (s/and number? even?) dec any? dec any?))
+> (def h (comp g h))
+
+> (h 1)
+:clojure.spec/invalid
+> (h 2)
+2
+> (h nil)
+:clojure.spec/invalid
+> (h "hello")
+:clojure.spec/invalid
+```
+
 
 
 Lets assume that we have defined some spec, say:
