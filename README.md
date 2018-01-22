@@ -51,7 +51,7 @@ If `f` and `g` are forms construced using spec-extended then `(comp g f)` is a f
 ```clojure
 > (def f #(conforms-> % number? inc any? inc even?))
 > (def g #(conforms-> % (s/and number? even?) dec any? dec any?))
-> (def h (comp g h))
+> (def h (comp g f))
 
 > (h 1)
 :clojure.spec/invalid
