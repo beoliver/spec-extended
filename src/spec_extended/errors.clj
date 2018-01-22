@@ -3,7 +3,7 @@
 
 (defn throw-spec [spec value]
   (throw (ex-info "value did not conform to spec"
-                  {:type ::invalid
+                  {:type ::s/invalid
                    :reason "value did not conform to spec"
                    :spec spec
                    :value value})))
@@ -18,4 +18,11 @@
   `(try ~expr
         (catch Exception e#
           (when-not (= ::invalid (:type (ex-data e#)))
+            (throw e#)))))
+
+(defmacro only-catch-invalid
+  [expr]
+  `(try ~expr
+        (catch Exception e#
+          (if (= (:type e#) ::s/invalid)
             (throw e#)))))

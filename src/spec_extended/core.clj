@@ -4,26 +4,20 @@
             [spec-extended.errors :refer [throw-spec
                                           catch-errors-valid?
                                           only-catch-spec-errors]])
-  (:refer-clojure :exclude [if-let when-let some-> some->> as->]))
+  (:refer-clojure :exclude [if-let when-let as->]))
+
+(defn fmap [f x]
+  (if-not (s/invalid? x) (f x) x))
+
+(defn nil-when-invalid
+  "returns `nil` if x is `:clojure.spec/invalid` else x"
+  [x]
+  (when-not (s/invalid? x) x))
 
 (defmacro if-let
-  "an extension of `clojure.core/if-let`
-  Will suppress any exceptions thrown during the validation process"
+  "an extension of `clojure.core/if-let`"
   ([spec bindings then]
-   `(if-let ~spec ~bindings ~then nil))
-  ([spec bindings then else]
-   (let [form (bindings 0) rhs (bindings 1)]
-     `(let [res# ~rhs]
-        (if (catch-errors-valid? ~spec res#)
-          (let [~form res#]
-            ~then)
-          ~else)))))
-
-(defmacro if-let!
-  "an extension of `clojure.core/if-let`
-   Does not suppress exceptions thrown during the validation process"
-  ([spec bindings then]
-   `(if-let ~spec ~bindings ~then nil))
+   `(if-let ~spec ~bindings ~then ::s/invalid))
   ([spec bindings then else]
    (let [form (bindings 0) rhs (bindings 1)]
      `(let [res# ~rhs]
@@ -32,157 +26,52 @@
             ~then)
           ~else)))))
 
-;;; if-let!! would not make sense as there is an else branch (nil by default)
-
 (defmacro when-let
-  "an extension of `clojure.core/when-let`
-  Will suppress any exceptions thrown during the validation process"
+  "an extension of `clojure.core/when-let`"
   [spec bindings then]
   (let [form (bindings 0) rhs (bindings 1)]
     `(let [res# ~rhs]
-       (when (catch-errors-valid? ~spec res#)
+       (when (s/valid? ~spec res#)
          (let [~form res#]
            ~then)))))
 
-(defmacro when-let!
-  "an extension of `clojure.core/when-let`
-  Does not suppress exceptions thrown during the validation process"
-  ([spec bindings then]
-   (let [form (bindings 0) rhs (bindings 1)]
-     `(let [res# ~rhs]
-        (if (s/valid? ~spec res#)
-          (let [~form res#]
-            ~then)
-          nil)))))
-
-(defmacro when-let!!
-  "an extension of `clojure.core/when-let`
-  Does not suppress exceptions thrown during the validation process.
-  If `binding` does not conform to `spec`, throws an exception"
-  ([spec bindings then]
-   (let [form (bindings 0) rhs (bindings 1)]
-     `(let [res# ~rhs]
-        (if (s/valid? ~spec res#)
-          (let [~form res#]
-            ~then)
-          (throw-spec ~spec res#))))))
-
-
-(defmacro valid->
-  "Similar to `some->` but `forms` is a sequence of clauses.
-  Note that if a form returns `nil` the threading will continue if the `spec` allows it.
-
-  (valid-> <expr> <spec>
-           <form> <spec>
-           <form> <spec>
-           ...
-           <form> <spec>)
-
-  Each <spec> is treated as a post-condition.
-  "
+(defmacro conforms->
+  "When expr is not `:clojure.spec/invalid`, threads it into the first form (via ->),
+  and when that result is not `:clojure.spec/invalid`, through the next etc"
   [expr spec & forms]
   (let [g (gensym)
-        steps (map (fn [[step spec]] `(let [temp# (-> ~g ~step)]
-                                        (if (try (s/valid? ~spec temp#)
-                                                 (catch Exception e#
-                                                   (throw-spec ~spec temp#)))
-                                          temp#
-                                          (throw-spec ~spec temp#))))
+        steps (map (fn [[step spec]] `(if (s/invalid? ~g) ~g (s/conform ~spec (-> ~g ~step))))
                    (partition 2 forms))]
-    `(only-catch-spec-errors (let [~g ~expr]
-                               (if (try (s/valid? ~spec ~g)
-                                        (catch Exception e#
-                                          (throw-spec ~spec ~g)))
-                                 (let [~@(interleave (repeat g) (butlast steps))]
-                                   ~(if (empty? steps)
-                                      g
-                                      (last steps)))
-                                 (throw-spec ~spec ~g))))))
+    `(let [~g (do ~expr)
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
 
-(defmacro valid->!
-  "Similar to `some->` but `forms` is a sequence of clauses.
-  Note that if a form returns `nil` the threading will continue if the `spec` allows it.
-
-  (valid->! <expr> <spec>
-            <form> <spec>
-            <form> <spec>
-            ...
-            <form> <spec>)
-
-  Each <spec> is treated as a post-condition.
-  "
+(defmacro conforms->>
+  "When expr is not `:clojure.spec/invalid`, threads it into the first form (via ->>),
+  and when that result is not `:clojure.spec/invalid`, through the next etc"
   [expr spec & forms]
   (let [g (gensym)
-        steps (map (fn [[step spec]] `(let [temp# (-> ~g ~step)]
-                                        (if (s/valid? ~spec temp#)
-                                          temp#
-                                          (throw-spec ~spec temp#))))
+        steps (map (fn [[step spec]] `(if (s/invalid? ~g) ~g (s/conform ~spec (->> ~g ~step))))
                    (partition 2 forms))]
-    `(only-catch-spec-errors (let [~g ~expr]
-                               (if (s/valid? ~spec ~g)
-                                 (let [~@(interleave (repeat g) (butlast steps))]
-                                   ~(if (empty? steps)
-                                      g
-                                      (last steps)))
-                                 (throw-spec ~spec ~g))))))
+    `(let [~g (do ~expr)
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
 
-(defmacro valid->!!
-  "Similar to `some->` but `forms` is a sequence of clauses.
-  Note that if a form returns `nil` the threading will continue if the `spec` allows it.
-
-  (valid->!! <expr> <spec>
-             <form> <spec>
-             <form> <spec>
-             ...
-             <form> <spec>)
-
-  Each <spec> is treated as a post-condition.
-  "
-  [expr spec & forms]
-  (let [g (gensym)
-        steps (map (fn [[step spec]] `(let [temp# (-> ~g ~step)]
-                                        (if (s/valid? ~spec temp#)
-                                          temp#
-                                          (throw-spec ~spec temp#))))
+(defmacro as->
+  [expr name spec & forms]
+  (let [steps (map (fn [[step spec-step]]
+                     `(if (s/invalid? ~name) ~name (s/conform ~spec-step ~step)))
                    (partition 2 forms))]
-    `(let [~g ~expr]
-       (if (s/valid? ~spec ~g)
-         (let [~@(interleave (repeat g) (butlast steps))]
-           ~(if (empty? steps)
-              g
-              (last steps)))
-         (throw-spec ~spec ~g)))))
+    `(let [~name (s/conform ~spec ~expr)
+           ~@(interleave (repeat name) (butlast steps))]
+       ~(if (empty? steps)
+          name
+          (last steps)))))
 
-(defmacro valid->>
-  "Similar to `some->>` but `forms` is a sequence of clauses.
-  Note that if a form returns `nil` the threading will continue if the `spec` allows it.
-
-  (valid->> <expr> <spec>
-            <form> <spec>
-            <form> <spec>
-            ...
-            <form> <spec>)
-
-  Each <spec> is treated as a post-condition.
-  "
-  [expr spec & forms]
-  (let [g (gensym)
-        steps (map (fn [[step spec]] `(let [temp# (->> ~g ~step)]
-                                        (if (try (s/valid? ~spec temp#)
-                                                 (catch Exception e#
-                                                   (throw-spec ~spec temp#)))
-                                          temp#
-                                          (throw-spec ~spec temp#))))
-                   (partition 2 forms))]
-    `(only-catch-spec-errors (let [~g ~expr]
-                               (if (try (s/valid? ~spec ~g)
-                                        (catch Exception e#
-                                          (throw-spec ~spec ~g)))
-                                 (let [~@(interleave (repeat g) (butlast steps))]
-                                   ~(if (empty? steps)
-                                      g
-                                      (last steps)))
-                                 (throw-spec ~spec ~g))))))
 
 ;;; TODO implement the error handling used in spec-some->
 ;;; the following code is not yet 100%

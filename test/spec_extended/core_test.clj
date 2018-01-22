@@ -30,26 +30,26 @@
   (is (= :err
          (se/if-let ::even-string? [x 2] :ok :err))))
 
-(deftest if-lets-test
-  (is (= 5
-         (se/if-lets [[x 2] even?
-                      [y 3] odd?] (+ x y))))
-  (is (= :err
-         (se/if-lets [[x 2] odd?
-                      [y 3] odd?] (+ x y) :err)))
-  (is (= "0ab"
-         (se/if-lets [[x 0] even?
-                      [y "ab"] ::even-string?] (str x y))))
-  (is (= "0ab"
-         (se/if-lets [[x 0] even?
-                      [y "ab"] (s/and string? #(even? (count %)))]
-                     (str x y))))
-  (is (= :err
-         (se/if-lets [[x 0] even?
-                      [y "a"] ::even-string?] (str x y) :err)))
-  (is (nil?
-       (se/if-lets [[x 1] even?
-                    [y "ab"] ::even-string?] (str x y)))))
+;; (deftest if-lets-test
+;;   (is (= 5
+;;          (se/if-lets [[x 2] even?
+;;                       [y 3] odd?] (+ x y))))
+;;   (is (= :err
+;;          (se/if-lets [[x 2] odd?
+;;                       [y 3] odd?] (+ x y) :err)))
+;;   (is (= "0ab"
+;;          (se/if-lets [[x 0] even?
+;;                       [y "ab"] ::even-string?] (str x y))))
+;;   (is (= "0ab"
+;;          (se/if-lets [[x 0] even?
+;;                       [y "ab"] (s/and string? #(even? (count %)))]
+;;                      (str x y))))
+;;   (is (= :err
+;;          (se/if-lets [[x 0] even?
+;;                       [y "a"] ::even-string?] (str x y) :err)))
+;;   (is (nil?
+;;        (se/if-lets [[x 1] even?
+;;                     [y "ab"] ::even-string?] (str x y)))))
 
 (deftest when-let-test
   (is (= :ok
@@ -65,33 +65,33 @@
   (is (= nil
          (se/when-let ::even-string? [x 2] :ok))))
 
-(deftest when-lets-test
-  (is (= 5
-         (se/when-lets [[x 2] even?
-                        [y 3] odd?] (+ x y))))
-  (is (= "0ab"
-         (se/when-lets [[x 0] even?
-                        [y "ab"] ::even-string?] (str x y))))
-  (is (nil?
-       (se/when-lets [[x 1] even?
-                      [y "ab"] ::even-string?] (str x y)))))
+;; (deftest when-lets-test
+;;   (is (= 5
+;;          (se/when-lets [[x 2] even?
+;;                         [y 3] odd?] (+ x y))))
+;;   (is (= "0ab"
+;;          (se/when-lets [[x 0] even?
+;;                         [y "ab"] ::even-string?] (str x y))))
+;;   (is (nil?
+;;        (se/when-lets [[x 1] even?
+;;                       [y "ab"] ::even-string?] (str x y)))))
 
-(deftest spec-when-let!-test
-  (is (= :ok
-         (try-spec-expr
-          (se/spec-when-let! even? [x 2] :ok))))
-  (is (= :ok
-         (se/spec-when-let! ::even [x 2] :ok)))
-  (is (= :spec-extended.errors/invalid
-         (try-spec-expr
-          (se/spec-when-let! odd? [x 2] :ok))))
-  (is (= :ok
-         (se/spec-when-let! ::even-string? [x "abcd"] :ok)))
-  (is (= :spec-extended.errors/invalid
-         (try-spec-expr
-          (se/spec-when-let! ::even-string? [x "abc"] :ok))))
-  (is (= :spec-extended.errors/invalid
-         (try-spec-expr (se/spec-when-let! ::even-string? [x 2] :ok)))))
+;; (deftest spec-when-let!-test
+;;   (is (= :ok
+;;          (try-spec-expr
+;;           (se/spec-when-let! even? [x 2] :ok))))
+;;   (is (= :ok
+;;          (se/spec-when-let! ::even [x 2] :ok)))
+;;   (is (= :spec-extended.errors/invalid
+;;          (try-spec-expr
+;;           (se/spec-when-let! odd? [x 2] :ok))))
+;;   (is (= :ok
+;;          (se/spec-when-let! ::even-string? [x "abcd"] :ok)))
+;;   (is (= :spec-extended.errors/invalid
+;;          (try-spec-expr
+;;           (se/spec-when-let! ::even-string? [x "abc"] :ok))))
+;;   (is (= :spec-extended.errors/invalid
+;;          (try-spec-expr (se/spec-when-let! ::even-string? [x 2] :ok)))))
 
 
 ;; (deftest some->test
@@ -113,21 +113,34 @@
 
 
 
-(deftest some->test
-  (is (= 2 (se/some-> 0
-                      even? inc
-                      odd? inc
-                      even?)))
-  (is (nil? (se/some-> 0 odd?
-                       inc odd?
-                       inc even?)))
-  (is (nil? (se/some-> 0 even?
-                       inc even?
-                       inc even?)))
-  (is (nil? (se/some-> 0 even?
-                       inc odd?
-                       inc odd?))))
+;; (deftest some->test
+;;   (is (= 2 (se/some-> 0
+;;                       even? inc
+;;                       odd? inc
+;;                       even?)))
+;;   (is (nil? (se/some-> 0 odd?
+;;                        inc odd?
+;;                        inc even?)))
+;;   (is (nil? (se/some-> 0 even?
+;;                        inc even?
+;;                        inc even?)))
+;;   (is (nil? (se/some-> 0 even?
+;;                        inc odd?
+;;                        inc odd?))))
 
 
+
+(deftest conforms->test
+  (is (= 0 (se/conforms-> 0 even?)))
+  ;; (is (= 1 (se/conforms-> ::s/invalid any?)))
+  (is (s/invalid? (se/conforms-> 1 even?
+                                 inc odd?)))
+  )
+
+(deftest as->test
+  (is (= ::s/invalid (se/as-> 0 $ odd?
+                              $ some?
+                              (println $) any?)))
+  )
 
 ;; (macroexpand '(spec-some-> 0 even? inc even? inc even? inc))
