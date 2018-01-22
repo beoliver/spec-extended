@@ -88,37 +88,9 @@ mechanisms for making partial functions total, some information may be lost in t
 As spec-extended macros introduce clauses, users should be aware of scoping implications. Most (all?) of clojures threading macros exapand into let statements. Clojure makes variables bound at position n in a let expresions available to subsequent expressions. This also means that bound variables are accessable by spec definitions.
 - Need to check, but if a spec refers to some **global** variable, and the let bindings introduce a variable that shadows that global, then it will be used in place. Will work on this, think about what is the best approach.
 
-### `if-let` and `when-let`
-The most trivial and possibly most useful macro is the spec extended `if-let` form.
-
-```clojure
-(s/def ::gt-than-fifty #(> % 50))
-
-(se/if-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
-  (println "valid value was" x)
-  (println "the else branch"))
-```
-In the above example `(rand-int 100)` is computed, and if the resulting value is `spec/valid?` with respect to the composed spec `(s/and even? ::gt-than-fifty)` the *then* branch is executed. In a similar fashion there is a `when-let`.
-```clojure
-(se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
-  (println "valid value was" x))
-```
-There are alse `if-let!` and `when-let!` versions that expose validation exceptions. However there is no `if-let!!` or `when-let!!` as there is always an else branch (`nil` by default).
-
-```clojure
-;; these examples will throw an exceptino due to (even? nil)
-
-(se/if-let! even? [x nil]
-  (println "this branch wont be executed becase of (even? nil)" x)
-  (println "neither will this!"))
-
-(se/when-let! even? [x nil]
-  (println "this branch wont be executed becase of (even? nil)" x))
-```
-
 ### `conforms->` and `conforms->>`
 
-While the standard `some->` and `some->>` threading macros use *nil punning* - i.e it is assumed that if any form returns `nil` then no more forms should be evaluated, `conforms->` and `conforms->>` takes a different approach. Each value is tested to see if `(spec/conform x)` returns `:clojure.spec/invalid`. If this is the case then `:clojure.spec/invalid` will be returned.
+While the standard `some->` and `some->>` threading macros use *nil punning* - i.e it is assumed that if any form returns `nil` then the resulting `nil` should not be passed to any more forms. `conforms->` and `conforms->>` takes a different approach. Each value is tested to see if `(spec/conform x)` returns `:clojure.spec/invalid`. If this is the case then `:clojure.spec/invalid` will be returned.
 
 To get a clearer idea we can macroexpand the form to see what it looks like under the hood.
 
@@ -134,6 +106,22 @@ To get a clearer idea we can macroexpand the form to see what it looks like unde
                                         (clojure.core/-> G__17316 inc)))]
   (if (clojure.spec/invalid? G__17316) G__17316
       (clojure.spec/conform any? (clojure.core/-> G__17316 println))))
+```
+
+### `if-let` and `when-let`
+The most trivial and possibly most useful macro is the spec extended `if-let` form.
+
+```clojure
+(s/def ::gt-than-fifty #(> % 50))
+
+(se/if-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
+  (println "valid value was" x)
+  (println "the else branch"))
+```
+In the above example `(rand-int 100)` is computed, and if the resulting value is `spec/valid?` with respect to the composed spec `(s/and even? ::gt-than-fifty)` the *then* branch is executed. In a similar fashion there is a `when-let`.
+```clojure
+(se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
+  (println "valid value was" x))
 ```
 
 ### `as->`
