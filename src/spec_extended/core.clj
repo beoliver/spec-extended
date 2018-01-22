@@ -42,7 +42,7 @@
   (let [g (gensym)
         steps (map (fn [[step spec]] `(if (s/invalid? ~g) ~g (s/conform ~spec (-> ~g ~step))))
                    (partition 2 forms))]
-    `(let [~g (do ~expr)
+    `(let [~g (s/conform ~spec ~expr)
            ~@(interleave (repeat g) (butlast steps))]
        ~(if (empty? steps)
           g
@@ -55,7 +55,7 @@
   (let [g (gensym)
         steps (map (fn [[step spec]] `(if (s/invalid? ~g) ~g (s/conform ~spec (->> ~g ~step))))
                    (partition 2 forms))]
-    `(let [~g (do ~expr)
+    `(let [~g (s/conform ~spec ~expr)
            ~@(interleave (repeat g) (butlast steps))]
        ~(if (empty? steps)
           g

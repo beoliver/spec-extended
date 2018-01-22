@@ -11,7 +11,7 @@ In all of the following examples `clojure.spec` has been impoted as `s`, while `
 => (se/conforms-> (rand-int 100) even?
                   inc            ::gt-than-fifty
                   println        any?)
-86
+71
 nil
 
 => (se/conforms-> (rand-int 100) even?
