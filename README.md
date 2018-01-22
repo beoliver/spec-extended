@@ -10,6 +10,10 @@ In all of the following examples `clojure.spec` has been impoted as `s`, while `
 
 (se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
   (println "valid value was" x))
+
+(se/conforms-> (rand-int 100) even?
+               inc            ::gt-than-fifty
+	       println        any?)
 ```
 
 ## Rationale
