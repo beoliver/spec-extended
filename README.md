@@ -127,16 +127,12 @@ In the above example `(rand-int 100)` is computed, and if the resulting value is
 ### `as->`
 
 ```clojure
-(ns my-project
-  (:require [clojure.spec :as s]
-            [spec-extended.core :as se]))
-
 (s/def ::my-even even?)
 
-(se/as-> 100 $
-         (s/and number? ::my-even) (+ $ 50)
-	 even? (do (println "hello from spec-extentions") $)
-	 odd? (println "this will never execute"))
+(as-> 100 $ (s/and number? ::my-even)
+      (+ $ 50) even?
+      (do (println "hello from spec-extentions") $) even?
+      (cons $ nil) list?)
 ```
 
 ## Usage

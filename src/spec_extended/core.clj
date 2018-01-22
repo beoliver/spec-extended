@@ -63,8 +63,8 @@
 
 (defmacro as->
   [expr name spec & forms]
-  (let [steps (map (fn [[step spec-step]]
-                     `(if (s/invalid? ~name) ~name (s/conform ~spec-step ~step)))
+  (let [steps (map (fn [[step spec]]
+                     `(if (s/invalid? ~name) ~name (s/conform ~spec ~step)))
                    (partition 2 forms))]
     `(let [~name (s/conform ~spec ~expr)
            ~@(interleave (repeat name) (butlast steps))]
