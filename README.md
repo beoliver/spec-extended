@@ -6,14 +6,18 @@ In all of the following examples `clojure.spec` has been impoted as `s`, while `
 ## Example
 
 ```clojure
-(s/def ::gt-than-fifty #(> % 50))
+=> (s/def ::gt-than-fifty #(> % 50))
 
-(se/when-let (s/and even? ::gt-than-fifty) [x (rand-int 100)]
-  (println "valid value was" x))
+=> (se/conforms-> (rand-int 100) even?
+                  inc            ::gt-than-fifty
+                  println        any?)
+86
+nil
 
-(se/conforms-> (rand-int 100) even?
-               inc            ::gt-than-fifty
-	       println        any?)
+=> (se/conforms-> (rand-int 100) even?
+                  inc            ::gt-than-fifty
+                  println        any?)
+:clojure.spec/invalid
 ```
 
 ## Rationale
