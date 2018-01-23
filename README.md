@@ -30,7 +30,14 @@ As clojure does not really *do* types, instead of tring to treat it as a typed l
 
 ## Properties
 
-`clojure.spec` uses a namespaced keyword `:clojure.spec/invalid` to represent when a value does not `clojure.spec/conform` to a given spec. While this has introduced some [issues](https://dev.clojure.org/jira/browse/CLJ-1966), this library treats `:clojure.spec/invalid` in a **special** way.
+`clojure.spec` uses a namespaced keyword `:clojure.spec/invalid` to represent when a value does not `clojure.spec/conform` to a given spec. While this has introduced some [issues](https://dev.clojure.org/jira/browse/CLJ-1966), this library treats `:clojure.spec/invalid` in a **special** way. Note that if you try to bind a value to `::s/invalid` in a let expression you get the following error
+```clojure
+> (let [x ::s/invalid] x)
+ExceptionInfo Call to clojure.core/let did not conform to spec:
+In: [0 1] val: :clojure.spec/invalid fails spec: :clojure.core.specs/bindings at: [:args :bindings :init-expr] predicate: any?
+:clojure.spec/args  ([x :clojure.spec/invalid] x)
+  clojure.core/ex-info (core.clj:4725)
+```
 
 ```clojure
 > (def f #(some-> % inc inc))
