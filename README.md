@@ -38,23 +38,8 @@ In: [0 1] val: :clojure.spec/invalid fails spec: :clojure.core.specs/bindings at
 :clojure.spec/args  ([x :clojure.spec/invalid] x)
   clojure.core/ex-info (core.clj:4725)
 ```
-
-```clojure
-> (def f #(some-> % inc inc))
-> (def g #(some-> % dec dec))
-> (def h (comp g f))
-
-> (h 1)
-1
-> (h 2)
-2
-> (h nil)
-nil
-> (h "hello")
-ClassCastException java.lang.String cannot be cast to java.lang.Number  clojure.lang.Numbers.dec (Numbers.java:120)
-```
 ### Composition
-If `f` and `g` are forms construced using spec-extended then `(comp g f)` is a function using spec-extended.
+- If `f` and `g` are construced using spec-extended then `(comp g f)` is a function using spec-extended.
 ```clojure
 > (def f #(conforms-> % number? inc any? inc even?))
 > (def g #(conforms-> % (s/and number? even?) dec any? dec any?))
@@ -69,8 +54,22 @@ If `f` and `g` are forms construced using spec-extended then `(comp g f)` is a f
 > (h "hello")
 :clojure.spec/invalid
 ```
+### fmap
+The option type (Maybe) of ML has the the form:
+```haskell
+data Maybe a = Nothing | Just a
+```
+In a way `:clojure.spec/invalid` can be thought of as `Nothing` while any other value is a `Just a`.
+```clojure
+> (fmap inc :clojure.spec/invalid)
+:clojure.spec/invalid
+> (fmap inc 1)
+2
+> (fmap inc (when-let number? [x nil] x))
+:clojure.spec/invalid
+```
 
-
+### Other
 
 Lets assume that we have defined some spec, say:
 ```clojure
